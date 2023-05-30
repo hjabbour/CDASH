@@ -9,6 +9,7 @@ urlpatterns = [
     path('files/<str:filename>/', views.file_detail, name='file_detail'),
     path('files/edit/<str:filename>/', views.file_columns, name='file_columns'),
     path('process_columns/<str:filename>/', views.process_columns, name='process_columns'),
+    path('delete_files/', views.delete_files, name='delete_files'),
 
 
 ]

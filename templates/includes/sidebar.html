@@ -7,7 +7,7 @@
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
-        <span class="b-title">Datta Able</span>
+        <span class="b-title">SE Dash</span>
       </a>
       <a class="mobile-menu" id="mobile-collapse" href="javascript:"><span></span></a>
     </div>
@@ -35,6 +35,19 @@
           <ul class="pcoded-submenu">
             <li class=""><a href="{% url 'login' %}" class="">Sign IN</a></li>
             <li class=""><a href="{% url 'register' %}" class="">Sign UP</a></li>
+          </ul>
+        </li>
+        {% endif %}
+
+        {% if not request.user.is_authenticated %}
+        <li
+          data-username="CSV tools , upload , choose columns "
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-lock"></i></span><span class="pcoded-mtext">CSV tools</span></a>
+          <ul class="pcoded-submenu">
+            <li class=""><a href="{% url 'csv_processor:upload_csv' %}" class="">Upload</a></li>
+            <li class=""><a href="{% url 'csv_processor:file_list' %}" class="">List</a></li>
           </ul>
         </li>
         {% endif %}
@@ -69,7 +82,7 @@
           {% endfor %}
         {% endif %}
 
-        {% if request.user.is_authenticated and not request.user.is_superuser %}
+        {% if  request.user.is_authenticated and not request.user.is_superuser %}
         <li class="nav-item pcoded-menu-caption">
           <label>UI Element</label>
         </li>

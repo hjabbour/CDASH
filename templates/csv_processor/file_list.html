@@ -1,6 +1,6 @@
 {% extends 'layouts/base.html' %}
 {% block content %}
-<h1>File List</h1>
+<h3>File List</h3>
 
 <ul>
   {% for file in files %}
@@ -8,4 +8,26 @@
   <li><a href="{% url 'csv_processor:file_detail' filename=file %}">view  {{ file }}</a></li>
   {% endfor %}
 </ul>
+
+<form method="POST" action="{% url 'csv_processor:delete_files' %}">
+  {% csrf_token %}
+  <table>
+    <thead>
+      <tr>
+        <th>Select</th>
+        <th>File Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for file in files %}
+      <tr>
+        <td><input type="checkbox" name="selected_files" value="{{ file }}"></td>
+        <td>{{ file }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <button type="submit" class="btn btn-primary">Delete Selected Files</button>
+</form>
+
 {% endblock content %}

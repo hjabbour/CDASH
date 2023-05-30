@@ -13,6 +13,23 @@ from django.http import HttpResponse
 import os
 
 
+def delete_files(request):
+    if request.method == 'POST':
+        selected_files = request.POST.getlist('selected_files')
+        if selected_files:
+            # Delete files from the file system
+            folder_path = os.path.join(settings.MEDIA_ROOT, 'csv_files')
+            for file_name in selected_files:
+                file_path = os.path.join(folder_path, file_name)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+
+            # Delete records from the database
+            UploadedFile.objects.filter(csv_file__in=selected_files).delete()
+            
+        return redirect('csv_processor:file_list')
+    return render(request, 'csv_processor/file_list.html')
+
 
 
 def upload_csv(request):
@@ -74,16 +91,30 @@ def file_columns(request, filename):
         'filename': filename,
         'selected_file': filename,
         'columns': columns,
+    
     }
     return render(request, 'csv_processor/file_columns.html', context)
 
 
 def process_columns(request,filename):
     if request.method == 'POST':
+        
         # Retrieve selected columns from the form data
         selected_columns = request.POST.getlist('columns')
         selected_file = request.POST.get('filename')
-        print(selected_columns)
+        file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
+        df = pd.read_csv(file_path)
+        new_df=df[selected_columns]
+        
+        context = {
+        'filename': filename,
+        'selected_file': filename,
+        'columns': selected_columns,
+        'df':new_df,
+    
+    }
+        
+    return render(request, 'csv_processor/new_columns.html', context)
 
         # Process the selected columns
         # ...
