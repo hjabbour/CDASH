@@ -1,0 +1,18 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<h1>Select Columns</h1>
+
+<form method="POST" action="{% url 'csv_processor:process_columns' selected_file %}">
+  {% csrf_token %}
+  <input type="hidden" name="file" value="{{ selected_file }}">
+  <ul>
+    {% for column in columns %}
+      <li>
+        <input type="checkbox" id="{{ column }}" name="columns" value="{{ column }}">
+        <label for="{{ column }}">{{ column }}</label>
+      </li>
+    {% endfor %}
+  </ul>
+  <button type="submit">Proceed</button>
+</form>
+{% endblock content %}

@@ -1,0 +1,11 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<h1>File List</h1>
+
+<ul>
+  {% for file in files %}
+  <li><a href="{% url 'csv_processor:file_columns' filename=file %}">Edit {{ file }}</a></li>
+  <li><a href="{% url 'csv_processor:file_detail' filename=file %}">view  {{ file }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock content %}
