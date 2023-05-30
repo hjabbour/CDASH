@@ -71,7 +71,7 @@ def icon_feather(request):
 
 
 # Forms and Tables
-@login_required(login_url='/accounts/login/')
+@#login_required(login_url='/accounts/login/')
 def form_elements(request):
   context = {
     'parent': 'form_components',
@@ -96,7 +96,7 @@ def morris_chart(request):
   }
   return render(request, 'pages/chart-morris.html', context)
 
-@login_required(login_url='/accounts/login/')
+#@login_required(login_url='/accounts/login/')
 def google_maps(request):
   context = {
     'parent': 'maps',
