@@ -10,6 +10,7 @@ urlpatterns = [
     path('files/edit/<str:filename>/', views.file_columns, name='file_columns'),
     path('process_columns/<str:filename>/', views.process_columns, name='process_columns'),
     path('delete_files/', views.delete_files, name='delete_files'),
+    path('process_ppt/', views.process_ppt, name='process_ppt'),
 
 
 ]

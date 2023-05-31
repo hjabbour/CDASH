@@ -5,6 +5,7 @@ whitenoise
 django-admin-datta==1.0.6
 pymongo
 pandas
+python-pptx
 
 # psycopg2-binary
 # mysqlclient

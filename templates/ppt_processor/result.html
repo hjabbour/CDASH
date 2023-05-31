@@ -1,0 +1,32 @@
+
+{% extends 'layouts/base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PPT Processing Result</title>
+    <style>
+        /* Add your custom styles here */
+        .slide {
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background-color: #f9f9f9;
+        }
+        .slide-content {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PPT Processing Result</h1>
+    {% for slide in slides %}
+    <div class="slide">
+        {% for content in slide %}
+        <div class="slide-content">{{ content }}</div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</body>
+</html>
+{% endblock content %}

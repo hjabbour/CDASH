@@ -8,6 +8,7 @@ from .forms import UploadCSVForm
 from .models import UploadedFile
 from django.conf import settings
 from django.http import HttpResponse
+from pptx import Presentation
 
 
 import os
@@ -124,3 +125,29 @@ def process_columns(request,filename):
 
     # Process the selected columns as needed (insert into MongoDB or return as pandas dataframe)
     #
+def process_ppt(request):
+    if request.method == 'POST':
+        ppt_file = request.FILES['ppt_file']
+
+        # Read the uploaded PPT file
+        presentation = Presentation(ppt_file)
+
+        # Extract slide contents
+        slides = []
+        for slide in presentation.slides:
+            slide_content = []
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    for paragraph in shape.text_frame.paragraphs:
+                        for run in paragraph.runs:
+                            slide_content.append(run.text)
+            slides.append(slide_content)
+
+        # Pass the extracted data to the template
+        context = {
+            'slides': slides
+        }
+        return render(request, 'ppt_processor/result.html', context)
+
+    return render(request, 'ppt_processor/upload_ppt.html')
+

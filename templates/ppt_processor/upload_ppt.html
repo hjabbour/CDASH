@@ -1,0 +1,18 @@
+{% extends 'layouts/base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload PPT File</title>
+</head>
+<body>
+    <h1>Upload PPT File</h1>
+    <form method="post" enctype="multipart/form-data" action="{% url 'csv_processor:process_ppt' %}">
+        {% csrf_token %}
+        <input type="file" name="ppt_file">
+        <input type="submit" value="Process">
+    </form>
+</body>
+</html>
+{% endblock content %}
+
