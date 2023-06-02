@@ -60,5 +60,17 @@
     </div>
   </div>
   
+
+
   <!-- test finish-->
+    <!-- add a section or button to submit and insert in Mongo-->
+    <div class="card Recent-Users">
+    <form method="post" action="{% url 'csv_processor:insert_into_mongodb' %}">
+      {% csrf_token %}
+      <input type="hidden" name="filename" value="{{ filename }}">
+      <input type="hidden" name="df_data" value="{{ df }}">
+      <button type="submit" class="btn btn-primary">Insert into MongoDB</button>
+    </form>
+    </div>
+  
 {% endblock content %}

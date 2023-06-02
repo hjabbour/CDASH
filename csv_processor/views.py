@@ -9,7 +9,15 @@ from .models import UploadedFile
 from django.conf import settings
 from django.http import HttpResponse
 from pptx import Presentation
+import json
+from bson import json_util
 
+
+#from pandas_datareader import data
+from datetime import date
+client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+db = client['CDASH']
+collection = db['csvdash']
 
 import os
 
@@ -151,3 +159,38 @@ def process_ppt(request):
 
     return render(request, 'ppt_processor/upload_ppt.html')
 
+## fix this its not inserting 
+def insert_into_mongodb(request):
+    if request.method == 'POST':
+        filename = request.POST['filename']
+        selected_columns = request.POST.getlist('columns')
+        file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
+        df = pd.read_csv(file_path)
+        new_df=df[selected_columns]
+        
+        
+        client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+        db = client['CDASH']
+        collection = db['csvdash']
+        # Convert DataFrame to JSON
+        #df_json = df.to_json(orient='records')
+        
+        # Connect to MongoDB
+        #client = MongoClient('mongodb://localhost:27017/')
+        #db = client['your_database_name']
+        #collection = db['your_collection_name']
+        
+        # Insert JSON data into MongoDB
+        #json_data = json.loads(df_json)
+        
+        data_dict = df.to_dict("records")
+        result=collection.insert_many(data_dict)
+      
+
+        #client.close()
+        
+        # Redirect to a success page or another URL
+        return render(request,'csv_processor/success.html')
+    
+    # Handle GET request or invalid form submission
+    return render(request,'csv_processor/error.html')
