@@ -1,0 +1,24 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5>Update Item</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="progress">Progress:</label>
+                <input type="text" name="progress" value="{{ item.progress }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="desc_update_text">Description Update:</label>
+                <textarea name="desc_update_text" class="form-control"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+        </form>
+    </div>
+</div>
+{% endblock content %}

@@ -9,6 +9,7 @@
       <div class="card">
         <div class="card-header">
           <h5>Form Template</h5>
+          <a href="{% url 'SEreview:collection_list' form_name %}">View Collection List</a>
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'SEreview:process_form' form_name %}">
