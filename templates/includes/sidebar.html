@@ -49,6 +49,24 @@
             <li class=""><a href="{% url 'csv_processor:upload_csv' %}" class="">Upload</a></li>
             <li class=""><a href="{% url 'csv_processor:file_list' %}" class="">List</a></li>
             <li class=""><a href="{% url 'csv_processor:process_ppt' %}" class="">ppt</a></li>
+            
+          </ul>
+        </li>
+        {% endif %}
+
+        {% if not request.user.is_authenticated %}
+        <li
+          data-username="CSV tools , upload , choose columns "
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-lock"></i></span><span class="pcoded-mtext">SE Review</span></a>
+          <ul class="pcoded-submenu">
+            <li class=""><a href="{% url 'SEreview:forecasted_opportunity' %}" class="">Forecasted</a></li>
+            <li class=""><a href="{% url 'SEreview:funnel_opportunity' %}" class="">Funnel</a></li>
+            <li class=""><a href="{% url 'SEreview:be_engagement_activity' %}" class="">BE engagement</a></li>
+            <li class=""><a href="{% url 'SEreview:cx_engagement_activity' %}" class="">CX engagement</a></li>
+            <li class=""><a href="{% url 'SEreview:tac_case' %}" class="">Tac cases</a></li>
+
           </ul>
         </li>
         {% endif %}

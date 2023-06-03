@@ -186,7 +186,10 @@ def insert_into_mongodb(request):
         data_dict = df.to_dict("records")
         result=collection.insert_many(data_dict)
       
-
+        if result:
+             return render(request,'csv_processor/success.html')
+        else:
+             return render(request,'csv_processor/error.html')
         #client.close()
         
         # Redirect to a success page or another URL

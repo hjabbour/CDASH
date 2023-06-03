@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
     "home",
     "csv_processor",
+    "SEreview",
 ]
 
 MIDDLEWARE = [
