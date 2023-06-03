@@ -3,7 +3,6 @@ from . import views
 
 app_name = 'SEreview'
 
-
 urlpatterns = [
     path('forecasted-opportunity/', views.forecasted_opportunity_view, name='forecasted_opportunity'),
     path('funnel-opportunity/', views.funnel_opportunity_view, name='funnel_opportunity'),

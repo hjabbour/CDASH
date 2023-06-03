@@ -1,26 +1,40 @@
 {% extends 'layouts/base.html' %}
-{% block content %}
-  <!-- form_template.html -->
+{% load static %}
 
-  <form method="post" action="{% url 'SEreview:process_form' form_name %}">
-    {% csrf_token %}
-    <table>
-      {% for field in form %}
-      <tr>
-        <td>{{ field.label_tag }}</td>
-        <td>{{ field }}</td>
-        {% if field.errors %}
-        <td>
-          <ul class="errors">
-            {% for error in field.errors %}
-            <li>{{ error }}</li>
-            {% endfor %}
-          </ul>
-        </td>
-        {% endif %}
-      </tr>
-      {% endfor %}
-    </table>
-    <button type="submit">Submit</button>
-  </form>
+{% block content %}
+
+  <!-- form_template.html -->
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Form Template</h5>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'SEreview:process_form' form_name %}">
+            {% csrf_token %}
+            <table class="table">
+              {% for field in form %}
+              <tr>
+                <td>{{ field.label_tag }}</td>
+                <td>{{ field }}</td>
+                {% if field.errors %}
+                <td>
+                  <ul class="errors">
+                    {% for error in field.errors %}
+                    <li>{{ error }}</li>
+                    {% endfor %}
+                  </ul>
+                </td>
+                {% endif %}
+              </tr>
+              {% endfor %}
+            </table>
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  
 {% endblock content %}

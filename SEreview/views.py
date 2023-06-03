@@ -1,6 +1,8 @@
 # Create your views here.
 # views.py
 from pymongo import MongoClient
+from datetime import datetime
+
 from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.views.generic import CreateView
@@ -79,7 +81,13 @@ def process_form_view(request, form_name):
                     'client_name': form.cleaned_data['client_name'],
                     'technology': form.cleaned_data['technology'],
                     'progress': form.cleaned_data['progress'],
-                    'approx_value': form.cleaned_data['approx_value']
+                    'approx_value': form.cleaned_data['approx_value'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
                 }
                 process_forecasted_opportunity_form(data)
                 return redirect('success_page')
@@ -88,46 +96,74 @@ def process_form_view(request, form_name):
             form = FunnelOpportunityForm(request.POST)
             if form.is_valid():
                 data = {
+                    'user_id':user_id,
                     'opportunity_name': form.cleaned_data['opportunity_name'],
                     'client_name': form.cleaned_data['client_name'],
                     'technology': form.cleaned_data['technology'],
                     'progress': form.cleaned_data['progress'],
-                    'approx_value': form.cleaned_data['approx_value']
+                    'approx_value': form.cleaned_data['approx_value'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
                 }
-                process_funnel_opportunity_form(data, user_id)
+                process_funnel_opportunity_form(data)
                 return redirect('success_page')
 
         elif form_name == 'be_engagement_activity':
             form = BEEngagementActivityForm(request.POST)
             if form.is_valid():
                 data = {
+                    'user_id':user_id,
                     'client_name': form.cleaned_data['client_name'],
                     'be_name': form.cleaned_data['be_name'],
-                    'progress': form.cleaned_data['progress']
+                    'progress': form.cleaned_data['progress'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
                 }
-                process_be_engagement_activity_form(data, user_id)
+                process_be_engagement_activity_form(data)
                 return redirect('success_page')
 
         elif form_name == 'cx_engagement_activity':
             form = CXEngagementActivityForm(request.POST)
             if form.is_valid():
                 data = {
+                    'user_id':user_id,
                     'client_name': form.cleaned_data['client_name'],
                     'cx_name': form.cleaned_data['cx_name'],
-                    'progress': form.cleaned_data['progress']
+                    'progress': form.cleaned_data['progress'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
                 }
-                process_cx_engagement_activity_form(data, user_id)
+                process_cx_engagement_activity_form(data)
                 return redirect('success_page')
 
         elif form_name == 'tac_case':
             form = TACCaseForm(request.POST)
             if form.is_valid():
                 data = {
+                    'user_id':user_id,
                     'client_name': form.cleaned_data['client_name'],
                     'case_name': form.cleaned_data['case_name'],
-                    'selected_options': form.cleaned_data['selected_options']
+                    'selected_options': form.cleaned_data['selected_options'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
                 }
-                process_tac_case_form(data, user_id)
+                process_tac_case_form(data)
                 return redirect('success_page')
 
     else:
