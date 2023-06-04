@@ -14,6 +14,8 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm
+
 
 client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
 db = client['CDASH']
@@ -163,9 +165,7 @@ def process_form_view(request, form_name):
                     'user_id':user_id,
                     'client_name': form.cleaned_data['client_name'],
                     'case_name': form.cleaned_data['case_name'],
-                    'pending': form.cleaned_data['pending'],
                     'status': form.cleaned_data['status'],
-                    'selected_options': form.cleaned_data['selected_options'],
                     'desc_update': [
                         {
                             'text': form.cleaned_data['desc_update'],
@@ -194,21 +194,42 @@ def collection_list(request, collection_name):
 def update_item(request, collection_name, item_id):
     collection = db[collection_name]
     item = collection.find_one({'_id': ObjectId(item_id)})
-    
+
+    # Determine the update form class based on the collection name
+    if collection_name == 'forecasted_opportunity':
+        UpdateForm = UForecastedOpportunityForm
+    elif collection_name == 'funnel_opportunity':
+        UpdateForm = UFunnelOpportunityForm
+    elif collection_name == 'be_engagement_activity':
+        UpdateForm = UBEEngagementActivityForm
+    elif collection_name == 'cx_engagement_activity':
+        UpdateForm = UCXEngagementActivityForm
+    elif collection_name == 'tac_case':
+        UpdateForm = UTACCaseForm
+    else:
+        # Handle the case when the collection name is not recognized
+        return HttpResponse('Invalid collection name')
+
     if request.method == 'POST':
-        progress = request.POST.get('progress')
-        desc_update_text = request.POST.get('desc_update_text')
-        
-        # Update progress field
-        collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'progress': progress}})
-        
-        # Add to desc_update array
-        update = {
-            'text': desc_update_text,
-            'timestamp': datetime.now()
-        }
-        collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update}})
-        
-        return redirect('SEreview:collection_list', collection_name=collection_name)
-    
-    return render(request, 'SEreview/update_item.html', {'item': item, 'collection_name': collection_name, 'item_id': item_id})
+        form = UpdateForm(request.POST)
+        if form.is_valid():
+            pending = form.cleaned_data['pending']
+            status = form.cleaned_data['status']
+            desc_update_text = form.cleaned_data['desc_update']
+            
+            # Update pending, status, and desc_update fields
+            collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'pending': pending, 'status': status}})
+            
+            # Add to desc_update array
+            update = {
+                'text': desc_update_text,
+                'timestamp': datetime.now()
+            }
+            collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update}})
+            
+            return redirect('SEreview:collection_list', collection_name=collection_name)
+    else:
+        form = UpdateForm()
+
+    return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
+

@@ -65,4 +65,36 @@ class TACCaseForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
     case_name = forms.CharField(label="Case Name", max_length=100)
     status = generate_radio_component(status_tac)
+    pending = generate_radio_component(pending)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+
+
+
+class UForecastedOpportunityForm(forms.Form):
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_op)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class UFunnelOpportunityForm(forms.Form):
+
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_op)
+    approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class UBEEngagementActivityForm(forms.Form):
+
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_be)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class UCXEngagementActivityForm(forms.Form):
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_cx)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class UTACCaseForm(forms.Form):
+    status = generate_radio_component(status_tac)
+    pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
