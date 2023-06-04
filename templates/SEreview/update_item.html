@@ -2,9 +2,39 @@
 {% load static %}
 {% block content %}
 <div class="card">
+
     <div class="card-header">
         <h5>Update Item</h5>
     </div>
+    <div class="card-block">
+        <div class="card-body">
+            <table class="table">
+                {% for field, value in item.items %}
+                    {% if field != '_id' %}
+                        {% if field != 'desc_update' %}
+                            <tr>
+                                <td><strong>{{ field }}:</strong></td>
+                                <td>{{ value }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                    
+                {% endfor %}
+                {% for update in item.desc_update %}
+                <div class="update-card-body">
+                    <tr>
+                   <td>
+                    <p><strong></strong> {{ update.text }}</p> 
+                    </td>
+                    <td>
+                    <p><strong>Timestamp:</strong> {{ update.timestamp }}</p>
+                    </td>
+                </div>
+                    </tr>
+                {% endfor %}
+            </table> 
+    </div>
+   
     <div class="card-body">
         <form method="post" action="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}">
             {% csrf_token %}

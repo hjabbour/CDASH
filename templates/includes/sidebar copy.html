@@ -3,7 +3,7 @@
 <nav class="pcoded-navbar">
   <div class="navbar-wrapper">
     <div class="navbar-brand header-logo">
-      <a href="{% url 'SEreview:stats' %}" class="b-brand">
+      <a href="{% url 'index' %}" class="b-brand">
         <div class="b-bg">
           <i class="feather icon-trending-up"></i>
         </div>
@@ -20,7 +20,7 @@
           {% if request.user.is_superuser %}
           <a href="{% url 'admin:index' %}" class="nav-link ">
           {% else %}
-          <a href="{% url 'SEreview:stats' %}" class="nav-link ">
+          <a href="{% url 'index' %}" class="nav-link ">
           {% endif %}
             <span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span>
           </a>
@@ -39,7 +39,7 @@
         </li>
         {% endif %}
 
-        {% if  request.user.is_authenticated %}
+        {% if not request.user.is_authenticated %}
         <li
           data-username="CSV tools , upload , choose columns "
           class="nav-item pcoded-hasmenu">
@@ -54,7 +54,7 @@
         </li>
         {% endif %}
 
-        {% if  request.user.is_authenticated %}
+        {% if not request.user.is_authenticated %}
         <li
           data-username="CSV tools , upload , choose columns "
           class="nav-item pcoded-hasmenu">
@@ -101,7 +101,7 @@
           {% endfor %}
         {% endif %}
 
-        {% if  request.user.is_superuser %}
+        {% if  request.user.is_authenticated and not request.user.is_superuser %}
         <li class="nav-item pcoded-menu-caption">
           <label>UI Element</label>
         </li>
