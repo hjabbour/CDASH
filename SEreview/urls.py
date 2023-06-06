@@ -4,6 +4,7 @@ from . import views
 app_name = 'SEreview'
 
 urlpatterns = [
+    path('', views.stats_view, name='stats'),
     path('forecasted-opportunity/', views.forecasted_opportunity_view, name='forecasted_opportunity'),
     path('funnel-opportunity/', views.funnel_opportunity_view, name='funnel_opportunity'),
     path('be-engagement-activity/', views.be_engagement_activity_view, name='be_engagement_activity'),

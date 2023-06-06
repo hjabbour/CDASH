@@ -17,7 +17,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('', include('home.urls')),
+    path('', include('SEreview.urls')),
     path("admin/", admin.site.urls),
     path("", include('admin_datta.urls')),
     path('csv_processor/', include('csv_processor.urls')),

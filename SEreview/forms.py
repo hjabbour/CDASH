@@ -5,7 +5,7 @@ from django.forms import formset_factory
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT']
 BE = ['Sec', 'EN', 'DC','Collab','IOT']
 entities = ['AM', 'Client', 'SE','BE']
-status_op = ['Active','Booked','Lost','Delayed','Closed']
+status_op = ['Active','Booked','Lost','Closed']
 status_be = ['Planned','Finished','Active','Delayed']
 status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']

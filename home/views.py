@@ -4,11 +4,14 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.views.generic import CreateView
 from django.contrib.auth import logout
 
+
 from django.contrib.auth.decorators import login_required
 
 def index(request):
+  
   context = {
-    'segment': 'index'
+    'segment': 'index',
+  
   }
   return render(request, "pages/index.html", context)
 

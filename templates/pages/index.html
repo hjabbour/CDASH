@@ -81,38 +81,23 @@
           <div class="table-responsive">
             <table class="table table-hover">
               <tbody>
-                <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-1.jpg' %}"
-                      alt="activity-user">
-                  </td>
-                  <td>
-                    <h6 class="mb-1">{{first_name}}</h6>
-                    <p class="m-0">Lorem Ipsum is simply…</p>
-                  </td>
-                  <td>
-                    <h6 class="text-muted"><i class="fas fa-circle text-c-green f-10 m-r-15"></i>11
-                      MAY 12:56</h6>
-                  </td>
-                  <td><a href="#!" class="label theme-bg2 text-white f-12">Reject</a><a href="#!"
-                      class="label theme-bg text-white f-12">Approve</a>
-                  </td>
-                </tr>
+                {% for i in recent_updates %}
                 <tr class="unread">
                   <td><img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-2.jpg' %}"
                       alt="activity-user">
                   </td>
                   <td>
-                    <h6 class="mb-1">Mathilde Andersen</h6>
-                    <p class="m-0">Lorem Ipsum is simply text of…</p>
+                    <h6 class="mb-1">{{i.user_first_name}}</h6>
+                    <p class="m-0">{{i.update_text}}</p>
                   </td>
                   <td>
-                    <h6 class="text-muted"><i class="fas fa-circle text-c-red f-10 m-r-15"></i>11 MAY
-                      10:35</h6>
+                    <h6 class="text-muted"><i class="fas fa-circle text-c-red f-10 m-r-15"></i>{{i.timestamp}}</h6>
                   </td>
-                  <td><a href="#!" class="label theme-bg2 text-white f-12">Reject</a><a href="#!"
+                  <td><a href="#!" class="label theme-bg2 text-white f-12">{{i.client_name}}</a><a href="#!"
                       class="label theme-bg text-white f-12">Approve</a>
                   </td>
                 </tr>
+                {% endfor %}
                 <tr class="unread">
                   <td><img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-3.jpg' %}"
                       alt="activity-user">
