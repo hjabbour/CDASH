@@ -18,6 +18,9 @@ from django.shortcuts import render, redirect
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm
 
+## remove status list from collection_user and put toupdatelist
+statuslist = ['Planned','Active','Delayed']
+toupdatelist = ['Planned','Active','Delayed']
 
 client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
 db = client['CDASH']
@@ -209,10 +212,11 @@ def collection_list(request, collection_name):
     
     return render(request, 'SEreview/collection_list.html', context)
 
+## use the toupdatelist to get what is needed 
 def collection_user(user_id, collection_name):
-    statuslist = ['Planned','Active','Delayed']
+    #statuslist = ['Planned','Active','Delayed']
     collection = db[collection_name]
-    data = collection.find({'user_id': user_id,'status': {'$in': statuslist}})
+    data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
     return data
 
 def update_item(request, collection_name, item_id):
@@ -267,8 +271,6 @@ def update_item(request, collection_name, item_id):
 ## Queries sections maybe moved to seperate file 
 def count_active_forecasted_opportunities(user_id=None):
     # Establish connection to MongoDB
-    client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-    db = client['CDASH']
 
     # Prepare the query based on the user_id parameter
     query = {'status': 'Active'}
@@ -291,8 +293,6 @@ def count_active_forecasted_opportunities(user_id=None):
 
 def count_active_funnel_opportunities(user_id=None):
     # Establish connection to MongoDB
-    client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-    db = client['CDASH']
 
     # Prepare the query based on the user_id parameter
     query = {'status': 'Active'}
@@ -314,8 +314,6 @@ def count_active_funnel_opportunities(user_id=None):
     return count, sum_value
 
 def weekly_updates():
-    client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-    db = client['CDASH']
     collection_names = db.list_collection_names()
 
     past_week_timestamp = datetime.now() - timedelta(days=7)
@@ -347,8 +345,6 @@ def get_user_first_name(user_id):
 
 
 def get_recent_updates():
-    client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-    db = client['CDASH']
     collection_names = db.list_collection_names()
 
     recent_updates = []
