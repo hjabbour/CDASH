@@ -9,6 +9,7 @@ status_op = ['Active','Booked','Lost','Closed']
 status_be = ['Planned','Finished','Active','Delayed']
 status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
+status_issue = ['Active','Resolved','Improved']
 
 pending= ['AM', 'Client', 'SE','BE']
 
@@ -68,6 +69,10 @@ class TACCaseForm(forms.Form):
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
+class IssuesForm(forms.Form):
+    issue_title = forms.CharField(label="Issue Title", max_length=100)
+    status = generate_radio_component(status_issue)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 
 
@@ -97,4 +102,8 @@ class UCXEngagementActivityForm(forms.Form):
 class UTACCaseForm(forms.Form):
     status = generate_radio_component(status_tac)
     pending = generate_radio_component(pending)
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    
+class UIssuesForm(forms.Form):
+    status = generate_radio_component(status_issue)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)

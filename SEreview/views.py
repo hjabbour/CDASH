@@ -15,8 +15,8 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
@@ -55,6 +55,12 @@ def tac_case_view(request):
     data =  collection_user(user_id, 'tac_case')
     return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'tac_case','data':data})
 
+def issues_view(request):
+    form = IssuesForm()
+    user_id = request.user.id
+    data =  collection_user(user_id, 'issues')
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'issues','data':data})
+
 
 def process_forecasted_opportunity_form(data):
     collection = db['forecasted_opportunity']
@@ -82,6 +88,12 @@ def process_cx_engagement_activity_form(data):
 
 def process_tac_case_form(data):
     collection = db['tac_case']
+    # Process and save the TAC case form data
+    # ...
+    collection.insert_one(data)
+
+def process_issues_form(data):
+    collection = db['issues']
     # Process and save the TAC case form data
     # ...
     collection.insert_one(data)
@@ -194,6 +206,24 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_tac_case_form(data)
+                return redirect('success_page')
+            
+        elif form_name == 'issues':
+            form = IssuesForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id':user_id,
+                    'issue_title': form.cleaned_data['issue_title'],
+                    'status': form.cleaned_data['status'],
+                    'create_date' :datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
+                }
+                process_issues_form(data)
                 return redirect('success_page')
 
     else:
@@ -350,6 +380,8 @@ def get_recent_updates():
     recent_updates = []
 
     for collection_name in collection_names:
+        if collection_name == 'issues':
+            continue  # Skip the 'issues' collection
         collection = db[collection_name]
         updates = collection.aggregate([
             {'$unwind': '$desc_update'},
