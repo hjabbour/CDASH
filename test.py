@@ -1,7 +1,9 @@
 from pymongo import MongoClient
 
 # Set up the MongoDB connection
-client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+#client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+client = MongoClient('mongodb://root:password@127.0.0.1:27017')
+
 db = client['CDASH']
 collection = db['csvdash']
 

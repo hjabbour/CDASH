@@ -22,7 +22,9 @@ from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngage
 statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed']
 
-client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+#client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+client = MongoClient('mongodb://root:password@192.168.2.107:27017')
+
 db = client['CDASH']
 
 def forecasted_opportunity_view(request):
@@ -123,7 +125,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_forecasted_opportunity_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
 
         elif form_name == 'funnel_opportunity':
             form = FunnelOpportunityForm(request.POST)
@@ -145,7 +147,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_funnel_opportunity_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
 
         elif form_name == 'be_engagement_activity':
             form = BEEngagementActivityForm(request.POST)
@@ -166,7 +168,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_be_engagement_activity_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
 
         elif form_name == 'cx_engagement_activity':
             form = CXEngagementActivityForm(request.POST)
@@ -187,7 +189,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_cx_engagement_activity_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
 
         elif form_name == 'tac_case':
             form = TACCaseForm(request.POST)
@@ -206,7 +208,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_tac_case_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
             
         elif form_name == 'issues':
             form = IssuesForm(request.POST)
@@ -224,7 +226,7 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_issues_form(data)
-                return redirect('success_page')
+                return redirect('SEreview:'+form_name)
 
     else:
         # Invalid request method, redirect to an error page or handle as needed
@@ -265,6 +267,8 @@ def update_item(request, collection_name, item_id):
         UpdateForm = UCXEngagementActivityForm
     elif collection_name == 'tac_case':
         UpdateForm = UTACCaseForm
+    elif collection_name == 'issues':
+        UpdateForm = UIssuesForm
     else:
         # Handle the case when the collection name is not recognized
         return HttpResponse('Invalid collection name')

@@ -11,7 +11,7 @@ status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
 status_issue = ['Active','Resolved','Improved']
 
-pending= ['AM', 'Client', 'SE','BE']
+pending= ['AM', 'Client', 'SE','BE','Partner','Mgmt']
 
 def generate_dropdown_component(options):
     choices = [(option, option) for option in options]
@@ -72,6 +72,7 @@ class TACCaseForm(forms.Form):
 class IssuesForm(forms.Form):
     issue_title = forms.CharField(label="Issue Title", max_length=100)
     status = generate_radio_component(status_issue)
+    pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 
@@ -106,4 +107,5 @@ class UTACCaseForm(forms.Form):
     
 class UIssuesForm(forms.Form):
     status = generate_radio_component(status_issue)
+    pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
