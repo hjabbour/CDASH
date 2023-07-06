@@ -1,0 +1,64 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+{% for item in data %}
+    <div class="card">
+        <div class="card-header">
+            <h5>Item Details</h5>
+        </div>
+        <div class="card-body">
+            <table class="table">
+                {% for field, value in item.items %}
+                    {% if field != '_id' %}
+                        {% if field != 'desc_update' %}
+                            <tr>
+                                <td><strong>{{ field }}:</strong></td>
+                                <td>{{ value }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endif %}
+                    {% if field == '_id' %}
+                        {% with item_id=value|stringformat:"s" %}
+                            <tr>
+                                <td></td>
+                                <td>
+                                    <a href="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}" class="btn btn-primary">Update</a>
+                                </td>
+                            </tr>
+                        {% endwith %}
+                    {% endif %}
+                {% endfor %}
+            </table>
+            
+            <table class="table">
+                <div class="update-card">
+                    <div class="update-card-header">
+                        <tr>
+                        <td>
+                        <h6>Updates</h6>
+                        </td>
+                        </tr>
+                    </div>
+                    {% for update in item.desc_update %}
+                    <div class="update-card-body">
+                        <tr>
+                       <td>
+                        <p><strong></strong> {{ update.text }}</p> 
+                        </td>
+                        <td>
+                        <p><strong>Timestamp:</strong> {{ update.timestamp }}</p>
+                        </td>
+                    </div>
+                        </tr>
+                    {% endfor %}
+                </div>
+            </table>
+            
+        </div>
+    </div>
+    <hr>
+{% empty %}
+    <p>No data found.</p>
+{% endfor %}
+{% endblock content %}

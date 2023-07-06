@@ -14,5 +14,6 @@ urlpatterns = [
     path('process-form/<str:form_name>/', views.process_form_view, name='process_form'),
     path('collections/<str:collection_name>/', views.collection_list, name='collection_list'),
     path('update/<str:collection_name>/<str:item_id>/', views.update_item, name='update_item'),
+    path('delete_item/<str:collection_name>/<str:item_id>/', views.delete_item, name='delete_item'),
     path('stats/', views.stats_view, name='stats'),
 ]

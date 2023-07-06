@@ -40,7 +40,8 @@
                       {% for field, value in item.items %}
                        {% if field == '_id' %}
                         {% with item_id=value|stringformat:"s" %}
-                              <a href="{% url 'SEreview:update_item' collection_name=form_name|urlencode item_id=item_id %}" class="label theme-bg text-white f-12">Update</a>
+                              <a href="{% url 'SEreview:update_item' collection_name=form_name|urlencode item_id=item_id %}" class="label theme-bg text-c-red f-12">Update</a>
+                              <a href="{% url 'SEreview:delete_item' collection_name=form_name|urlencode item_id=item_id %}" class="label theme-bg text-white f-12">Delete</a>
                         </td>
                   
                         {% endwith %}
@@ -62,7 +63,7 @@
                       17:38</h6>
                   </td>
                   <td><a href="#!" class="label theme-bg2 text-white f-12">Reject</a><a href="#!"
-                      class="label theme-bg text-white f-12">Approve</a>
+                      class="label  theme-bg text-white f-12">Approve</a>
                   </td>
                 </tr>
                 <tr class="unread">
@@ -83,19 +84,16 @@
                   </td>
                 </tr>
                 <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-2.jpg' %}"
-                      alt="activity-user">
+                  <td>
                   </td>
                   <td>
-                    <h6 class="mb-1">Albert Andersen</h6>
-                    <p class="m-0">Lorem Ipsum is simply dummy…</p>
                   </td>
                   <td>
-                    <h6 class="text-muted"><i class="fas fa-circle text-c-green f-10 m-r-15"></i>21
-                      July 12:56</h6>
+                    <a href="{% url 'SEreview:collection_list' form_name %}" class="label theme-bg text-white f-12">View All</a>
                   </td>
-                  <td><a href="#!" class="label theme-bg2 text-white f-12">Reject</a><a href="#!"
-                      class="label theme-bg text-white f-12">Approve</a>
+                  <td>
+                  </td>
+                  <td>
                   </td>
                 </tr>
               </tbody>
@@ -109,8 +107,8 @@
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header">
-          <h5>Form Template</h5>
-          <a href="{% url 'SEreview:collection_list' form_name %}">View Collection List</a>
+          <h5>Add New </h5>
+         
         </div>
         <div class="card-body">
           <form method="post" action="{% url 'SEreview:process_form' form_name %}">

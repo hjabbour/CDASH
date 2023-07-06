@@ -23,7 +23,13 @@ statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed']
 
 #client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-client = MongoClient('mongodb://root:password@192.168.2.107:27017')
+#client = MongoClient('mongodb://root:password@192.168.2.107:27017')
+#client = MongoClient('mongodb://root:password@10.229.166.116:27017')
+#client = MongoClient('mongodb://root:password@192.168.0.104:27017')
+client = MongoClient('mongodb://root:password@192.168.43.143:27017')
+
+
+
 
 db = client['CDASH']
 
@@ -301,6 +307,30 @@ def update_item(request, collection_name, item_id):
         form = UpdateForm()
 
     return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
+
+
+def delete_item(request, collection_name, item_id):
+    # Retrieve the logged-in user ID
+    user_id = request.user.id
+
+    # Retrieve the collection based on the collection_name
+    collection = db[collection_name]
+
+    # Find the item to be "deleted"
+    item = collection.find_one({'_id': ObjectId(item_id)})
+
+    if item:
+        # Check if the user has permission to delete the item
+        if item['user_id'] == user_id:
+            # Update the status of the item to "deleted"
+            collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'status': 'deleted'}})
+            #return HttpResponse('Item marked as deleted.')
+            return redirect('SEreview:collection_list', collection_name=collection_name)
+        else:
+            #return HttpResponse('You do not have permission to delete this item.')
+            return redirect('SEreview:collection_list', collection_name=collection_name)
+    else:
+        return redirect('SEreview:collection_list', collection_name=collection_name)
 
 ## Queries sections maybe moved to seperate file 
 def count_active_forecasted_opportunities(user_id=None):
