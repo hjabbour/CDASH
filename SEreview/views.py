@@ -23,10 +23,10 @@ statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed']
 
 #client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-#client = MongoClient('mongodb://root:password@192.168.2.107:27017')
-#client = MongoClient('mongodb://root:password@10.229.166.116:27017')
+client = MongoClient('mongodb://root:password@192.168.2.146:27017')
+#client = MongoClient('mongodb://root:password@10.229.166.67:27017')
 #client = MongoClient('mongodb://root:password@192.168.0.104:27017')
-client = MongoClient('mongodb://root:password@192.168.43.143:27017')
+#client = MongoClient('mongodb://root:password@192.168.43.143:27017')
 
 
 
