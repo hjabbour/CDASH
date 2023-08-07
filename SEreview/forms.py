@@ -109,3 +109,10 @@ class UIssuesForm(forms.Form):
     status = generate_radio_component(status_issue)
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    
+
+class WeeklyMeetingForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
+    meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)

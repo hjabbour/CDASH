@@ -6,7 +6,7 @@ from bson import ObjectId
 from dateutil.relativedelta import relativedelta
 
 
-from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm
+from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm 
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
 from django.views.generic import CreateView
@@ -15,7 +15,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
 
 ## remove status list from collection_user and put toupdatelist
@@ -23,8 +23,8 @@ statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed']
 
 #client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-client = MongoClient('mongodb://root:password@192.168.2.146:27017')
-#client = MongoClient('mongodb://root:password@10.229.166.67:27017')
+#client = MongoClient('mongodb://root:password@192.168.2.146:27017')
+client = MongoClient('mongodb://root:password@10.229.166.48:27017')
 #client = MongoClient('mongodb://root:password@192.168.0.104:27017')
 #client = MongoClient('mongodb://root:password@192.168.43.143:27017')
 
@@ -32,6 +32,12 @@ client = MongoClient('mongodb://root:password@192.168.2.146:27017')
 
 
 db = client['CDASH']
+@login_required
+def meetings_view(request):
+    form = WeeklyMeetingForm()
+    user_id = request.user.id
+    data =  collection_user(user_id, 'meetings') 
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data})
 
 def forecasted_opportunity_view(request):
     form = ForecastedOpportunityForm()
@@ -102,6 +108,12 @@ def process_tac_case_form(data):
 
 def process_issues_form(data):
     collection = db['issues']
+    # Process and save the TAC case form data
+    # ...
+    collection.insert_one(data)
+    
+def process_meetings_form(data):
+    collection = db['meetings']
     # Process and save the TAC case form data
     # ...
     collection.insert_one(data)
@@ -232,6 +244,26 @@ def process_form_view(request, form_name):
                                     ]
                 }
                 process_issues_form(data)
+                return redirect('SEreview:'+form_name)
+            
+        elif form_name == 'meetings':
+            form =  WeeklyMeetingForm(request.POST)
+            if form.is_valid():
+                meeting_date = datetime(year=form.cleaned_data['meeting_date'].year,month=form.cleaned_data['meeting_date'].month,day=form.cleaned_data['meeting_date'].day,)
+                data = {
+                    'user_id':user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'meeting_date' :meeting_date,
+                    'meeting_outcome' :form.cleaned_data['meeting_outcome'],
+                    'create_date' :datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
+                }
+                process_meetings_form(data)
                 return redirect('SEreview:'+form_name)
 
     else:
