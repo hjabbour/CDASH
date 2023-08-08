@@ -11,14 +11,6 @@
       <div class="card-block px-0 py-3">
         <div class="table-responsive">
           <table class="table table-hover">
-            <thead>
-              <tr>
-                  {% for field in fields_to_display %}
-                  <th>{{ field|title }}</th>
-                  {% endfor %}
-              </tr>
-          </thead>
-
             <tbody>
               {% for item in data %}
                 <tr class="unread">
@@ -39,7 +31,7 @@
                       </td>
                       <td>
                     {% for field, value in item.items %}
-                      {% if field == 'opportunity_name' or field == 'cx_name' or field == 'case_name' or field == 'meeting_outcome' or field == 'be_name' or field == 'issue_title' %}
+                      {% if field == 'opportunity_name' or field == 'cx_name' or field == 'case_name'  %}
                         {{ value }}
                       {% endif %}
                     {% endfor %}

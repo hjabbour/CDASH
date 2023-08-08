@@ -15,7 +15,7 @@ from bson import json_util
 
 #from pandas_datareader import data
 from datetime import date
-client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+client = MongoClient('mongodb://root:rootpassword@192.168.2.152:27017')
 db = client['CDASH']
 collection = db['csvdash']
 
@@ -166,10 +166,10 @@ def insert_into_mongodb(request):
         selected_columns = request.POST.getlist('columns')
         file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
         df = pd.read_csv(file_path)
-        new_df=df[selected_columns]
+        new_df = df[selected_columns]
         
         
-        client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
+        client = MongoClient('mongodb://root:password@192.168.2.152:27017')
         db = client['CDASH']
         collection = db['csvdash']
         # Convert DataFrame to JSON

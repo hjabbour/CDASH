@@ -20,11 +20,22 @@ from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngage
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
-toupdatelist = ['Planned','Active','Delayed']
+toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged']
+fields_to_display = {
+        'forecasted_opportunity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
+        'funnel_opportunity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
+        'be_engagement_activity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
+        'meetings': ['Client/Status', 'Date','Update', 'Outcome','Action'],
+        'cx_engagement_activity' : ['Client/Status', 'Date','Update', 'BE Name','Action'],
+        'tac_case' : ['Client/Status', 'Date','Update', 'Case Name','Action'],
+        'issues' : ['Status', 'Date','Update', 'Issue title','Action'],
+         
+        # Add more collections and their corresponding fields here
+    }
 
 #client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-#client = MongoClient('mongodb://root:password@192.168.2.146:27017')
-client = MongoClient('mongodb://root:password@10.229.166.48:27017')
+client = MongoClient('mongodb://root:password@192.168.2.152:27017')
+#client = MongoClient('mongodb://root:password@10.229.166.48:27017')
 #client = MongoClient('mongodb://root:password@192.168.0.104:27017')
 #client = MongoClient('mongodb://root:password@192.168.43.143:27017')
 
@@ -37,43 +48,50 @@ def meetings_view(request):
     form = WeeklyMeetingForm()
     user_id = request.user.id
     data =  collection_user(user_id, 'meetings') 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data})
+    fields = fields_to_display.get('meetings', [])
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data,'fields_to_display':fields})
 
 def forecasted_opportunity_view(request):
     form = ForecastedOpportunityForm()
     user_id = request.user.id
-    data =  collection_user(user_id, 'forecasted_opportunity') 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'forecasted_opportunity','data':data})
+    data =  collection_user(user_id, 'forecasted_opportunity')
+    fields = fields_to_display.get('forecasted_opportunity', []) 
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'forecasted_opportunity','data':data,'fields_to_display':fields})
 
 def funnel_opportunity_view(request):
     form = FunnelOpportunityForm()
     user_id = request.user.id
     data =  collection_user(user_id, 'funnel_opportunity') 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'funnel_opportunity','data':data})
+    fields = fields_to_display.get('funnel_opportunity', []) 
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'funnel_opportunity','data':data,'fields_to_display':fields})
 
 def be_engagement_activity_view(request):
     form = BEEngagementActivityForm()
     user_id = request.user.id
+    fields = fields_to_display.get('be_engagement_activity', []) 
     data =  collection_user(user_id, 'be_engagement_activity')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'be_engagement_activity','data':data})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'be_engagement_activity','data':data,'fields_to_display':fields})
 
 def cx_engagement_activity_view(request):
     form = CXEngagementActivityForm()
     user_id = request.user.id
+    fields = fields_to_display.get('cx_engagement_activity', []) 
     data =  collection_user(user_id, 'cx_engagement_activity')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'cx_engagement_activity','data':data})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'cx_engagement_activity','data':data,'fields_to_display':fields})
 
 def tac_case_view(request):
     form = TACCaseForm()
     user_id = request.user.id
+    fields = fields_to_display.get('tac_case', [])
     data =  collection_user(user_id, 'tac_case')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'tac_case','data':data})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'tac_case','data':data,'fields_to_display':fields})
 
 def issues_view(request):
     form = IssuesForm()
     user_id = request.user.id
+    fields = fields_to_display.get('issues', [])
     data =  collection_user(user_id, 'issues')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'issues','data':data})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'issues','data':data,'fields_to_display':fields})
 
 
 def process_forecasted_opportunity_form(data):
@@ -253,6 +271,7 @@ def process_form_view(request, form_name):
                 data = {
                     'user_id':user_id,
                     'client_name': form.cleaned_data['client_name'],
+                    'status': 'Active',
                     'meeting_date' :meeting_date,
                     'meeting_outcome' :form.cleaned_data['meeting_outcome'],
                     'create_date' :datetime.now(),
@@ -274,11 +293,15 @@ def collection_list(request, collection_name):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
     data = collection.find({'user_id': user_id})
+    fields = fields_to_display.get(collection_name, [])
+    # Preprocess the data to create a list of dictionaries
+    
     context = {
         'collection_name': collection_name,
-        'data': data
-        # Other context variables
-    }
+        'data': data,
+        'fields_to_display': fields,
+        
+         }
     
     return render(request, 'SEreview/collection_list.html', context)
 
