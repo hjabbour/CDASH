@@ -11,7 +11,7 @@ status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
 status_issue = ['Active','Resolved','Improved']
 
-pending= ['AM', 'Client', 'SE','BE','Partner','Mgmt','TAC']
+pending= ['AM', 'Client', 'SE','BE','Partner','Mgmt','TAC','CX']
 
 def generate_dropdown_component(options):
     choices = [(option, option) for option in options]
