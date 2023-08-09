@@ -34,9 +34,9 @@ fields_to_display = {
     }
 
 #client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-client = MongoClient('mongodb://root:password@192.168.2.152:27017')
-#client = MongoClient('mongodb://root:password@10.229.166.48:27017')
-#client = MongoClient('mongodb://root:password@192.168.0.104:27017')
+#client = MongoClient('mongodb://root:password@192.168.2.152:27017')
+client = MongoClient('mongodb://root:password@10.229.166.67:27017')
+#client = MongoClient('mongodb://root:password@127.0.0.1:27017')
 #client = MongoClient('mongodb://root:password@192.168.43.143:27017')
 
 
@@ -292,7 +292,10 @@ def process_form_view(request, form_name):
 def collection_list(request, collection_name):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
-    data = collection.find({'user_id': user_id})
+    if is_user_superuser(user_id):
+        data = collection.find()
+    else:
+        data = collection.find({'user_id': user_id})
     fields = fields_to_display.get(collection_name, [])
     # Preprocess the data to create a list of dictionaries
     
@@ -306,10 +309,14 @@ def collection_list(request, collection_name):
     return render(request, 'SEreview/collection_list.html', context)
 
 ## use the toupdatelist to get what is needed 
-def collection_user(user_id, collection_name):
+def collection_user(user_id, collection_name,superuser=False):
+    
     #statuslist = ['Planned','Active','Delayed']
     collection = db[collection_name]
-    data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
+    if is_user_superuser(user_id):
+        data = collection.find({'status': {'$in': toupdatelist}})
+    else:
+        data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
     return data
 
 def update_item(request, collection_name, item_id):
@@ -543,3 +550,43 @@ def stats_view(request, user_id=None):
     # Render the stats.html template with the context
     #return render(request, 'SEreview/stats.html', context)
     return render(request, 'pages/index.html', context)
+
+def is_user_superuser(user_id):
+    User = get_user_model()
+    try:
+        user = User.objects.get(id=user_id)
+        return user.is_superuser
+    except User.DoesNotExist:
+        return False
+
+def weeklyreview(request):
+    user_id = request.user.id
+
+    forecasted_opportunities = list(collection_user(user_id, 'forecasted_opportunity'))
+    funnel_opportunities = list(collection_user(user_id, 'funnel_opportunity'))
+    meetings = list(collection_user(user_id, 'meetings'))
+    be_engagements = list(collection_user(user_id, 'be_engagement_activity'))
+    cx_engagements = list(collection_user(user_id, 'cx_engagement_activity'))
+    issues = list(collection_user(user_id, 'issues'))
+    tac_cases = list(collection_user(user_id, 'tac_case'))
+    
+    
+    # Calculate the count and value of active forecasted opportunities
+    forecast_count, forecast_value = count_active_forecasted_opportunities(user_id)
+    
+    # Calculate the count and value of active funnel opportunities
+    funnel_count, funnel_value = count_active_funnel_opportunities(user_id)
+
+    return render(request, 'SEreview/weeklyreview.html', {
+        'forecasted_opportunities': forecasted_opportunities,
+        'funnel_opportunities': funnel_opportunities,
+        'meetings': meetings,
+        'be_engagements': be_engagements,
+        'cx_engagements': cx_engagements,
+        'issues': issues,
+        'tac_cases': tac_cases,
+        'forecast_count':forecast_count,
+        'forecast_value':forecast_value,
+        'funnel_count': funnel_count,
+        'funnel_value' :funnel_value,
+    })

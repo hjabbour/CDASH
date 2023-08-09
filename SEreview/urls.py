@@ -17,4 +17,5 @@ urlpatterns = [
     path('update/<str:collection_name>/<str:item_id>/', views.update_item, name='update_item'),
     path('delete_item/<str:collection_name>/<str:item_id>/', views.delete_item, name='delete_item'),
     path('stats/', views.stats_view, name='stats'),
+    path('weeklyreview/', views.weeklyreview, name='weeklyreview'),
 ]
