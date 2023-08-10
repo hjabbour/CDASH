@@ -33,9 +33,9 @@ fields_to_display = {
         # Add more collections and their corresponding fields here
     }
 
-#client = MongoClient('mongodb://root:rootpassword@192.168.2.190:27017')
-#client = MongoClient('mongodb://root:password@192.168.2.152:27017')
-client = MongoClient('mongodb://root:password@10.229.166.67:27017')
+client = MongoClient('mongodb://root:password@192.168.2.155:27017')
+#client = MongoClient('mongodb://root:password@192.168.2.155:27017')
+#client = MongoClient('mongodb://root:password@10.229.166.67:27017')
 #client = MongoClient('mongodb://root:password@127.0.0.1:27017')
 #client = MongoClient('mongodb://root:password@192.168.43.143:27017')
 
