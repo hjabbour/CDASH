@@ -2,6 +2,7 @@
 {% load static %}
 
 {% block content %}
+ <!--[  Opportuntities  and funnel engages tac ] start-->
 <div class="row">
     <div class="col-md-6">
         <div class="card">
@@ -93,7 +94,8 @@
       </div>
   </div>
 </div>
-
+ <!--[  Opportuntities  and funnel engages tac ] end-->
+ <!--[  CX  and BE engagement  ] start-->
 <div class="row">
   <div class="col-md-6">
     <div class="card">
@@ -187,7 +189,9 @@
   </div>
 
 </div>
+ <!--[  CX  and BE engagement  ] end-->
 
+  <!--[  TAC and Issues  ] start-->
 <div class="row">
   <div class="col-md-6">
    <div class="card">
@@ -201,20 +205,24 @@
                        <tr>
                            <th>Client/Case</th>
                            <th>Status</th>
-                           <th>Update</th>
+                           <th>pending</th>
+                           <th>update</th>
                        </tr>
                    </thead>
                    <tbody>
                        {% for item in tac_cases %}
-                       <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
+                       <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p> <p class='text-muted'>{{ update.timestamp|date:'M d, Y' }}</p></tr> {% endfor %}">
                            <td>{{ item.client_name }} <p>{{ item.case_name }}</p></td>
                            <td>{{ item.status}}</td>
+                           <td>{{ item.pending}}</td>
                            <td>
-                               {% for update in item.desc_update %}
-                             
-                               <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                               {% endfor %}
-                           </td>
+                            {% for update in item.desc_update %}
+                            {% if forloop.last %}
+                    
+                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                            {% endif %}
+                            {% endfor %}
+                        </td>
                        </tr>
                        {% endfor %}
                    </tbody>
@@ -240,13 +248,15 @@
                     </thead>
                     <tbody>
                         {% for item in issues %}
-                        <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
+                        <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:'M d, Y' }} {% endfor %} ">
                             <td>{{ item.issue_title }} </td>
                             <td>{{ item.pending}}</td>
                             <td>
                                 {% for update in item.desc_update %}
-                              
+                                {% if forloop.last %}
+                        
                                 <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                {% endif %}
                                 {% endfor %}
                             </td>
                         </tr>
@@ -259,4 +269,46 @@
    </div>
 
 </div>
+  <!--[  TAC and Issues  ] end-->
+
+  <!--[  Meetings  and other ] start-->
+  <div class="row">
+    <div class="col-md-6">
+     <div class="card">
+         <div class="card-header">
+             <h5>Customer facing meetings </h5>
+         </div>
+         <div class="card-block">
+             <div class="table-responsive">
+                 <table class="table table-hover">
+                     <thead>
+                         <tr>
+                             <th>Client</th>
+                             <th>meeting Date</th>
+                             <th>Update Date</th>
+                         </tr>
+                     </thead>
+                     <tbody>
+                         {% for item in meetings %}
+                         <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
+                             <td>{{ item.client_name }} <p>{{ item.case_name }}</p></td>
+                             <td>{{ item.meeting_date|date:"M d, Y"}}</td>
+                             <td>
+                                 {% for update in item.desc_update %}
+                               
+                                 <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                 {% endfor %}
+                             </td>
+                         </tr>
+                         {% endfor %}
+                     </tbody>
+                 </table>
+             </div>
+         </div>
+     </div>
+    </div>
+    
+  
+  </div>
+    <!--[  Meetings and other  ] end-->
 {% endblock content %}

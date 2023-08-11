@@ -11,7 +11,7 @@ status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
 status_issue = ['Active','Resolved','Improved']
 
-pending= ['AM', 'Client', 'SE','BE','Partner','Mgmt','TAC','CX']
+pending= ['AM', 'Client','SE','BE','Partner','Leadership','TAC','CX','BU']
 
 def generate_dropdown_component(options):
     choices = [(option, option) for option in options]
@@ -75,7 +75,11 @@ class IssuesForm(forms.Form):
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
-
+class WeeklyMeetingForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
+    meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)
 
 class UForecastedOpportunityForm(forms.Form):
     pending = generate_radio_component(pending)
@@ -111,8 +115,4 @@ class UIssuesForm(forms.Form):
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
     
 
-class WeeklyMeetingForm(forms.Form):
-    client_name = forms.CharField(max_length=100)
-    meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
-    desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
-    meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)
+

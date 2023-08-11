@@ -22,19 +22,19 @@ from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngage
 statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged']
 fields_to_display = {
-        'forecasted_opportunity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
-        'funnel_opportunity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
-        'be_engagement_activity': ['Client/Status', 'Date','Update', 'Opportunity','Action'],
-        'meetings': ['Client/Status', 'Date','Update', 'Outcome','Action'],
-        'cx_engagement_activity' : ['Client/Status', 'Date','Update', 'BE Name','Action'],
-        'tac_case' : ['Client/Status', 'Date','Update', 'Case Name','Action'],
-        'issues' : ['Status', 'Date','Update', 'Issue title','Action'],
+        'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
+        'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
+        'be_engagement_activity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
+        'meetings': ['Client/Status', 'Creation Date','Update','Pending','Action'],
+        'cx_engagement_activity' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
+        'tac_case' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
+        'issues' : ['Issue title', 'Creation Date','Update', 'Pending','Action'],
          
         # Add more collections and their corresponding fields here
     }
 
-client = MongoClient('mongodb://root:password@192.168.2.155:27017')
 #client = MongoClient('mongodb://root:password@192.168.2.155:27017')
+client = MongoClient('mongodb://root:password@192.168.2.156:27017')
 #client = MongoClient('mongodb://root:password@10.229.166.67:27017')
 #client = MongoClient('mongodb://root:password@127.0.0.1:27017')
 #client = MongoClient('mongodb://root:password@192.168.43.143:27017')
@@ -561,10 +561,17 @@ def is_user_superuser(user_id):
 
 def weeklyreview(request):
     user_id = request.user.id
+    # Calculate the date range for the past month
+    today = datetime.now()
+    period_filter = today - timedelta(days=14)
+    
+    # Get meetings from the past month
+    all_meetings = list(collection_user(user_id, 'meetings'))
+    meetings = [meeting for meeting in all_meetings if meeting['meeting_date'] >= period_filter]
+
 
     forecasted_opportunities = list(collection_user(user_id, 'forecasted_opportunity'))
     funnel_opportunities = list(collection_user(user_id, 'funnel_opportunity'))
-    meetings = list(collection_user(user_id, 'meetings'))
     be_engagements = list(collection_user(user_id, 'be_engagement_activity'))
     cx_engagements = list(collection_user(user_id, 'cx_engagement_activity'))
     issues = list(collection_user(user_id, 'issues'))
