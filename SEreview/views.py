@@ -17,6 +17,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
+from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
@@ -33,11 +34,7 @@ fields_to_display = {
         # Add more collections and their corresponding fields here
     }
 
-#client = MongoClient('mongodb://root:password@192.168.2.155:27017')
-client = MongoClient('mongodb://root:password@192.168.2.156:27017')
-#client = MongoClient('mongodb://root:password@10.229.166.67:27017')
-#client = MongoClient('mongodb://root:password@127.0.0.1:27017')
-#client = MongoClient('mongodb://root:password@192.168.43.143:27017')
+client = get_mongodb_connection()
 
 
 

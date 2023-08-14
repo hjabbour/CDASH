@@ -21,7 +21,7 @@
               <tbody>
                 {% for item in data %}
                 <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-                    <td><a  class="label theme-bg2 text-white f-12">{{item.client_name}}{{ item.issue_title}}</a> <p text-align: center>{{item.opportunity_name}}{{item.case_name}}{{item.cx_name}}</p></td>
+                    <td><a  class="label theme-bg2 text-white f-12">{{item.client_name}}{{ item.issue_title}}</a> <p  class='badge' text-align: center>{{item.opportunity_name}}{{item.case_name}}{{item.cx_name}}</p></td>
                     <td>{{item.create_date|date:"M d, Y"}}</td>  
                     {% for update in item.desc_update %}
                         {% if forloop.last %}

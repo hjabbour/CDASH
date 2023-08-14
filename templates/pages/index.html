@@ -83,9 +83,6 @@
               <tbody>
                 {% for i in recent_updates %}
                 <tr class="unread">
-                  <td><img class="rounded-circle" style="width:40px;" src="{% static 'assets/images/user/avatar-2.jpg' %}"
-                      alt="activity-user">
-                  </td>
                   <td>
                     <h6 class="mb-1">{{i.user_first_name}}</h6>
                     <p class="m-0">{{i.update_text}}</p>
@@ -93,8 +90,7 @@
                   <td>
                     <h6 class="text-muted"><i class="fas fa-circle text-c-red f-10 m-r-15"></i>{{i.timestamp}}</h6>
                   </td>
-                  <td><a href="#!" class="label theme-bg2 text-white f-12">{{i.client_name}}</a><a href="#!"
-                      class="label theme-bg text-white f-12">Approve</a>
+                  <td><a href="#!" class="label theme-bg2 text-white f-12">{{i.client_name}}</a>
                   </td>
                 </tr>
                 {% endfor %}
