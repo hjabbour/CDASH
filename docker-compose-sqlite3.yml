@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  appseed-app:
+    container_name: appseed_app
+    restart: always
+    env_file: .env.sql3
+    build: .
+    volumes:
+      - ./sqlite_data:/sqlite_data  # Mount SQLite database file as a volume create that directory
+    depends_on:
+      - nginx
+
+  nginx:
+    container_name: nginx
+    restart: always
+    image: "nginx:latest"
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
