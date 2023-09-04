@@ -1,6 +1,6 @@
 import os, random, string
 from pymongo import MongoClient
-
+# 2023 Haytham Jabbour hjabbour
 def get_mongodb_connection():
     mongodb_url = os.environ.get('MONGODB_URL')
     if mongodb_url:
