@@ -39,9 +39,9 @@
         </li>
         {% endif %}
 
-        {% if  request.user.is_authenticated %}
+        {% if  request.user.is_superuser %}
         <li
-          data-username="CSV tools , upload , choose columns "
+          data-username="File tools , upload , choose columns "
           class="nav-item pcoded-hasmenu">
           <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
                 class="feather icon-lock"></i></span><span class="pcoded-mtext">CSV tools</span></a>
