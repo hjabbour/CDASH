@@ -1,7 +1,7 @@
 from django import forms
 from django.forms import formset_factory
 
-
+# 2023 Haytham Jabbour hjabbour
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT']
 BE = ['Sec', 'EN', 'DC','Collab','IOT']
 entities = ['AM', 'Client', 'SE','BE']

@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-
+# 2023 Haytham Jabbour hjabbour
 app_name = 'SEreview'
 
 urlpatterns = [
