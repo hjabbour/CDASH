@@ -26,7 +26,7 @@ toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged']
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
-        'activity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
+        'activity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'be_engagement_activity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'meetings': ['Client/Status', 'Creation Date','Update','Pending','Action'],
         'cx_engagement_activity' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
@@ -614,6 +614,7 @@ def weeklyreview(request):
     cx_engagements = list(collection_user(user_id, 'cx_engagement_activity'))
     issues = list(collection_user(user_id, 'issues'))
     tac_cases = list(collection_user(user_id, 'tac_case'))
+    activities = list(collection_user(user_id, 'activity'))
     
     
     # Calculate the count and value of active forecasted opportunities
@@ -634,4 +635,5 @@ def weeklyreview(request):
         'forecast_value':forecast_value,
         'funnel_count': funnel_count,
         'funnel_value' :funnel_value,
+        'activities' : activities,
     })

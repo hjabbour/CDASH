@@ -272,7 +272,7 @@
   <!--[  TAC and Issues  ] end-->
 
   <!--[  Meetings  and other ] start-->
-  <div class="row">
+<div class="row">
     <div class="col-md-6">
      <div class="card">
          <div class="card-header">
@@ -306,9 +306,45 @@
              </div>
          </div>
      </div>
+
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Activities  </h5>
+            </div>
+            <div class="card-block">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th>Activity Date</th>
+                                <th>Update Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in activities %}
+                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
+                                <td>{{ item.client_name }} <p>{{ item.case_name }}</p></td>
+                                <td>{{ item.create_date|date:"M d, Y"}}</td>
+                                <td>
+                                    {% for update in item.desc_update %}
+                                  
+                                    <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+   
     </div>
     
   
-  </div>
+</div>
     <!--[  Meetings and other  ] end-->
 {% endblock content %}
