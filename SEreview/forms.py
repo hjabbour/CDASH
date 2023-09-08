@@ -2,7 +2,7 @@ from django import forms
 from django.forms import formset_factory
 
 # 2023 Haytham Jabbour hjabbour
-technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT']
+technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing']
 BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
