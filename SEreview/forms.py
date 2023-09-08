@@ -3,7 +3,7 @@ from django.forms import formset_factory
 
 # 2023 Haytham Jabbour hjabbour
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT']
-BE = ['Sec', 'EN', 'DC','Collab','IOT']
+BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
 status_be = ['Planned','Finished','Active','Delayed']
