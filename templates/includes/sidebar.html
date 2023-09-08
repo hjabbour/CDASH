@@ -16,7 +16,7 @@
         <li class="nav-item pcoded-menu-caption">
           <label>Navigation</label>
         </li>
-        <li data-username="dashboard Default Ecommerce CRM Analytics Crypto Project" class="nav-item {% if 'index' in segment %}active{% endif %}">
+        <li data-username="dashboard Default " class="nav-item {% if 'index' in segment %}active{% endif %}">
           {% if request.user.is_superuser %}
           <a href="{% url 'admin:index' %}" class="nav-link ">
           {% else %}
@@ -56,7 +56,7 @@
 
         {% if  request.user.is_authenticated %}
         <li
-          data-username="CSV tools , upload , choose columns "
+          data-username="SE review "
           class="nav-item pcoded-hasmenu">
           <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
                 class="feather icon-lock"></i></span><span class="pcoded-mtext">SE Review</span></a>
@@ -73,6 +73,56 @@
           </ul>
         </li>
         {% endif %}
+
+        {% if  request.user.is_authenticated %}
+        <li
+        data-username="Heat-maps "
+        class="nav-item pcoded-hasmenu">
+        <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+              class="feather icon-lock"></i></span><span class="pcoded-mtext">Heat-maps</span></a>
+        <ul class="pcoded-submenu">
+          <li class=""><a href="" class="">Coming Versions</a></li>
+        </ul>
+      </li>
+
+        <li
+          data-username="BE planning "
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-lock"></i></span><span class="pcoded-mtext">BE Planning</span></a>
+          <ul class="pcoded-submenu">
+            <li class=""><a href="" class="">Coming Versions</a></li>
+          </ul>
+        </li>
+
+        <li
+        data-username="Initiatives "
+        class="nav-item pcoded-hasmenu">
+        <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+              class="feather icon-lock"></i></span><span class="pcoded-mtext">Initiatives</span></a>
+        <ul class="pcoded-submenu">
+          <li class=""><a href="" class="">Coming Versions</a></li>
+        </ul>
+        <ul class="pcoded-submenu">
+          <li class=""><a href="" class="">TecTalk</a></li>
+        </ul>
+        <ul class="pcoded-submenu">
+          <li class=""><a href="" class="">Round-tables</a></li>
+        </ul>
+      </li>
+
+      <li
+      data-username="SE Bucket "
+      class="nav-item pcoded-hasmenu">
+      <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+            class="feather icon-lock"></i></span><span class="pcoded-mtext">SE Bucket</span></a>
+      <ul class="pcoded-submenu">
+        <li class=""><a href="" class="">Coming Versions</a></li>
+      </ul>
+    </li>
+
+        {% endif %}
+
 
         {% admin_get_menu as app_list %}
         {% if app_list %}

@@ -8,7 +8,9 @@ def get_mongodb_connection():
     else:
         # Fallback to a hardcoded URL
         #client = MongoClient('mongodb://root:password@10.229.166.36:27017')
-        client = MongoClient('mongodb://root:password@192.168.2.158:27017')
+        #client = MongoClient('mongodb://root:password@192.168.2.114:27017')
+        client = MongoClient('mongodb://root:password@10.229.164.20:27017')
+        
         #client = MongoClient('mongodb://root:password@127.0.0.1:27017')
         
     return client
