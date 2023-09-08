@@ -16,8 +16,8 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
 from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
@@ -26,6 +26,7 @@ toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged']
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
+        'activity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
         'be_engagement_activity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'meetings': ['Client/Status', 'Creation Date','Update','Pending','Action'],
         'cx_engagement_activity' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
@@ -62,6 +63,13 @@ def funnel_opportunity_view(request):
     data =  collection_user(user_id, 'funnel_opportunity') 
     fields = fields_to_display.get('funnel_opportunity', []) 
     return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'funnel_opportunity','data':data,'fields_to_display':fields})
+
+def activity_view(request):
+    form = ActivityForm()
+    user_id = request.user.id
+    data =  collection_user(user_id, 'activity') 
+    fields = fields_to_display.get('activity', []) 
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'activity','data':data,'fields_to_display':fields})
 
 def be_engagement_activity_view(request):
     form = BEEngagementActivityForm()
@@ -100,6 +108,12 @@ def process_forecasted_opportunity_form(data):
 
 def process_funnel_opportunity_form(data):
     collection = db['funnel_opportunity']
+    # Process and save the funnel opportunity form data
+    # ...
+    collection.insert_one(data)
+    
+def process_activity_form(data):
+    collection = db['activity']
     # Process and save the funnel opportunity form data
     # ...
     collection.insert_one(data)
@@ -182,7 +196,28 @@ def process_form_view(request, form_name):
                 }
                 process_funnel_opportunity_form(data)
                 return redirect('SEreview:'+form_name)
-
+            
+        elif form_name == 'activity':
+            form = ActivityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id':user_id,
+                    'activity_name': form.cleaned_data['activity_name'],
+                    'client_name': form.cleaned_data['client_name'],
+                    'technology': form.cleaned_data['technology'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'create_date' :datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                                    ]
+                }
+                process_activity_form(data)
+                return redirect('SEreview:'+form_name)
+        
         elif form_name == 'be_engagement_activity':
             form = BEEngagementActivityForm(request.POST)
             if form.is_valid():
@@ -293,7 +328,7 @@ def collection_list(request, collection_name):
     if is_user_superuser(user_id):
         data = collection.find()
     else:
-        data = collection.find({'user_id': user_id})
+        data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
     fields = fields_to_display.get(collection_name, [])
     # Preprocess the data to create a list of dictionaries
     
@@ -327,6 +362,8 @@ def update_item(request, collection_name, item_id):
         UpdateForm = UForecastedOpportunityForm
     elif collection_name == 'funnel_opportunity':
         UpdateForm = UFunnelOpportunityForm
+    elif collection_name == 'activity':
+        UpdateForm = UActivityForm
     elif collection_name == 'be_engagement_activity':
         UpdateForm = UBEEngagementActivityForm
     elif collection_name == 'cx_engagement_activity':
@@ -548,6 +585,9 @@ def stats_view(request, user_id=None):
     # Render the stats.html template with the context
     #return render(request, 'SEreview/stats.html', context)
     return render(request, 'pages/index.html', context)
+
+def error_page(request):
+    return render(request, 'SEreview/error_page.html')
 
 def is_user_superuser(user_id):
     User = get_user_model()

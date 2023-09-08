@@ -6,6 +6,7 @@ technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing']
 BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
+status_act = ['Planned','Initial','Followup','Funnel']
 status_be = ['Planned','Finished','Active','Delayed']
 status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
@@ -44,6 +45,14 @@ class FunnelOpportunityForm(forms.Form):
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_op)
     approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class ActivityForm(forms.Form):
+    activity_name = forms.CharField(label="Activity Name", max_length=100)
+    client_name = forms.CharField(label="Client Name", max_length=100)
+    technology=generate_multiselect_component(technologies)
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_act)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class BEEngagementActivityForm(forms.Form):
@@ -91,6 +100,12 @@ class UFunnelOpportunityForm(forms.Form):
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_op)
     approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
+    desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+
+class UActivityForm(forms.Form):
+
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_act)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UBEEngagementActivityForm(forms.Form):
