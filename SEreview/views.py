@@ -562,7 +562,7 @@ def stats_view(request, user_id=None):
         user_first_name = get_user_first_name(user_id)
     else:
         forecast_count,forecast_value =count_active_forecasted_opportunities()
-        funnel_count,funnel_value = count_active_funnel_opportunities(user_id)
+        funnel_count,funnel_value = count_active_funnel_opportunities()
         
     total_funnel = forecast_value+funnel_value
     total_count = funnel_count+forecast_count
