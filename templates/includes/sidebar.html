@@ -70,6 +70,10 @@
             <li class=""><a href="{% url 'SEreview:issues' %}" class="">Issues/Challenges</a></li>
             <li class=""><a href="{% url 'SEreview:meetings' %}" class="">Client Meetings</a></li>
             <li class=""><a href="{% url 'SEreview:weeklyreview' %}" class="">Weekly Review</a></li>
+          
+            {% if  request.user.is_superuser %}
+            <li class=""><a href="{% url 'SEreview:mweeklyreview' %}" class="">SEM View</a></li>
+            {% endif %}
 
           </ul>
         </li>
