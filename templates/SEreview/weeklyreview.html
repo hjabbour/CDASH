@@ -326,7 +326,7 @@
                         <tbody>
                             {% for item in activities %}
                             <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
-                                <td>{{ item.client_name }} <p>{{ item.case_name }}</p></td>
+                                <td>{{ item.client_name }} <p>{{ item.activity_name }}</p></td>
                                 <td>{{ item.create_date|date:"M d, Y"}}</td>
                                 <td>
                                     {% for update in item.desc_update %}
