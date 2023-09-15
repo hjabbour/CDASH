@@ -10,13 +10,17 @@ from dateutil.relativedelta import relativedelta
 from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm 
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User 
+
 from django.views.generic import CreateView
 from django.contrib.auth import logout
+from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth.decorators import login_required
 
-from django.shortcuts import render, redirect
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm
+from django.shortcuts import render, redirect, get_object_or_404
+
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
 from .conn import get_mongodb_connection
 
@@ -597,8 +601,13 @@ def is_user_superuser(user_id):
     except User.DoesNotExist:
         return False
 
-def weeklyreview(request):
-    user_id = request.user.id
+def weeklyreview(request,engineer_id=None):
+    
+    if engineer_id is not None:
+        user_id = get_object_or_404(User, id=engineer_id, is_superuser=False)
+    else:
+        user_id = request.user.id  # Default to the logged-in user
+    
     # Calculate the date range for the past month
     today = datetime.now()
     period_filter = today - timedelta(days=14)
@@ -636,4 +645,77 @@ def weeklyreview(request):
         'funnel_count': funnel_count,
         'funnel_value' :funnel_value,
         'activities' : activities,
+    })
+def is_superuser(user):
+    return user.is_superuser
+
+## unused function can use it later to filter any form or view with parametrized form
+@user_passes_test(is_superuser)
+def select_engineer(request):
+    if request.method == 'POST':
+        form = EngineerSelectionForm(request.POST)
+        if form.is_valid():
+            selected_engineer = form.cleaned_data['engineer']
+            return redirect('SEreview:mweeklyreview', engineer_id=selected_engineer.id)
+    else:
+        form = EngineerSelectionForm()
+
+    return render(request, 'SEreview/select_engineer.html', {'form': form})
+
+@user_passes_test(is_superuser)
+def mweeklyreview(request,engineer_id=None):
+    if request.method == 'POST':
+        # If it's a POST request, process the form submission.
+        form = EngineerSelectionForm(request.POST)
+        if form.is_valid():
+            selected_engineer = form.cleaned_data['engineer']
+            return redirect('SEreview:mweeklyreview', engineer_id=selected_engineer.id)
+    else:
+        # For GET requests and initial load, handle the engineer_id parameter if provided.
+        if engineer_id is not None:
+            form = EngineerSelectionForm(initial={'engineer': engineer_id})
+            user_id = engineer_id
+        else:
+            form = EngineerSelectionForm()
+            user_id = request.user.id  # Default to the logged-in user
+    
+    # Calculate the date range for the past month
+    today = datetime.now()
+    period_filter = today - timedelta(days=14)
+    
+    # Get meetings from the past month
+    all_meetings = list(collection_user(user_id, 'meetings'))
+    meetings = [meeting for meeting in all_meetings if meeting['meeting_date'] >= period_filter]
+
+
+    forecasted_opportunities = list(collection_user(user_id, 'forecasted_opportunity'))
+    funnel_opportunities = list(collection_user(user_id, 'funnel_opportunity'))
+    be_engagements = list(collection_user(user_id, 'be_engagement_activity'))
+    cx_engagements = list(collection_user(user_id, 'cx_engagement_activity'))
+    issues = list(collection_user(user_id, 'issues'))
+    tac_cases = list(collection_user(user_id, 'tac_case'))
+    activities = list(collection_user(user_id, 'activity'))
+    
+    
+    # Calculate the count and value of active forecasted opportunities
+    forecast_count, forecast_value = count_active_forecasted_opportunities(user_id)
+    
+    # Calculate the count and value of active funnel opportunities
+    funnel_count, funnel_value = count_active_funnel_opportunities(user_id)
+    form = EngineerSelectionForm(request.POST)
+
+    return render(request, 'SEreview/manager_weeklyreview.html', {
+        'forecasted_opportunities': forecasted_opportunities,
+        'funnel_opportunities': funnel_opportunities,
+        'meetings': meetings,
+        'be_engagements': be_engagements,
+        'cx_engagements': cx_engagements,
+        'issues': issues,
+        'tac_cases': tac_cases,
+        'forecast_count':forecast_count,
+        'forecast_value':forecast_value,
+        'funnel_count': funnel_count,
+        'funnel_value' :funnel_value,
+        'activities' : activities,
+        'form': form,
     })

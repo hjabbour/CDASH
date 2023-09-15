@@ -1,5 +1,7 @@
 from django import forms
 from django.forms import formset_factory
+from django.contrib.auth.models import User
+
 
 # 2023 Haytham Jabbour hjabbour
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing']
@@ -129,5 +131,10 @@ class UIssuesForm(forms.Form):
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
     
-
+class EngineerSelectionForm(forms.Form):
+    engineer = forms.ModelChoiceField(
+        queryset=User.objects.filter(is_superuser=False),
+        label="Select Engineer",
+        empty_label=None,  # Don't allow a blank choice
+    )
 
