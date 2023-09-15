@@ -4,8 +4,8 @@ from django.contrib.auth.models import User
 
 
 # 2023 Haytham Jabbour hjabbour
-technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing']
-BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing']
+technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing','Services','FSO']
+BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing','FSO']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
 status_act = ['Planned','Initial','Followup','Funnel','Completed']
