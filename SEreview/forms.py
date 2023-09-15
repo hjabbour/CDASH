@@ -8,7 +8,7 @@ technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing']
 BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
-status_act = ['Planned','Initial','Followup','Funnel']
+status_act = ['Planned','Initial','Followup','Funnel','Completed']
 status_be = ['Planned','Finished','Active','Delayed']
 status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
@@ -91,37 +91,47 @@ class WeeklyMeetingForm(forms.Form):
     meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
     meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)
+    
+class UWeeklyMeetingForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
+    meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)
 
 class UForecastedOpportunityForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_op)
+    approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UFunnelOpportunityForm(forms.Form):
-
+    client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_op)
     approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UActivityForm(forms.Form):
-
+    client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_act)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UBEEngagementActivityForm(forms.Form):
-
+    client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_be)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UCXEngagementActivityForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_cx)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
 
 class UTACCaseForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
     status = generate_radio_component(status_tac)
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)

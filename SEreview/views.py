@@ -21,7 +21,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm
 from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
@@ -368,6 +368,8 @@ def update_item(request, collection_name, item_id):
         UpdateForm = UFunnelOpportunityForm
     elif collection_name == 'activity':
         UpdateForm = UActivityForm
+    elif collection_name == 'meetings':
+        UpdateForm = UWeeklyMeetingForm
     elif collection_name == 'be_engagement_activity':
         UpdateForm = UBEEngagementActivityForm
     elif collection_name == 'cx_engagement_activity':
