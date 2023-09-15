@@ -26,7 +26,7 @@ from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
-toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged']
+toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial']
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
