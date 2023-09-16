@@ -45,6 +45,7 @@
                       {% with item_id=value|stringformat:"s" %}
                             <a href="{% url 'SEreview:update_item' collection_name=collection_name|urlencode item_id=item_id %}" class="label theme-bg text-c-red f-12">Update</a>
                             <a href="{% url 'SEreview:delete_item' collection_name=collection_name|urlencode item_id=item_id %}" class="label theme-bg text-white f-12">Delete</a>
+                            <a href="{% url 'SEreview:detail_item' collection_name=collection_name|urlencode item_id=item_id %}" class="label theme-bg text-white f-12">detail</a>
                       </td>
                 
                       {% endwith %}

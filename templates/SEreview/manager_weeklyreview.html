@@ -337,8 +337,9 @@
                                 <td>{{ item.create_date|date:"M d, Y"}}</td>
                                 <td>
                                     {% for update in item.desc_update %}
-                                  
+                                    {% if forloop.last %}
                                     <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                    {% endif %}
                                     {% endfor %}
                                 </td>
                             </tr>

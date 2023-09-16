@@ -10,7 +10,7 @@
         <div class="card-body">
             <table class="table">
                 {% for field, value in item.items %}
-                    {% if field != '_id' %}
+                    {% if field != '_id' and field != 'user_id' %}
                         {% if field != 'desc_update' %}
                             <tr>
                                 <td><strong>{{ field }}:</strong></td>

@@ -11,6 +11,7 @@ from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeFor
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User 
+from django.http import HttpResponse
 
 from django.views.generic import CreateView
 from django.contrib.auth import logout
@@ -721,3 +722,10 @@ def mweeklyreview(request,engineer_id=None):
         'activities' : activities,
         'form': form,
     })
+def detail_item(request, collection_name, item_id):
+    user_id = request.user.id  # Retrieve the logged-in user ID
+    collection = db[collection_name]
+    item = collection.find_one({'_id': ObjectId(item_id)})
+    fields = fields_to_display.get(collection_name, [])
+    
+    return render(request, 'SEreview/detail_item.html', { 'item': item, 'collection_name': collection_name, 'item_id': item_id,'fields_to_display':fields})

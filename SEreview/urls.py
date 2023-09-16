@@ -23,5 +23,6 @@ urlpatterns = [
     path('mweeklyreview/', views.mweeklyreview, name='mweeklyreview'),
     path('error/', views.error_page, name='error_page'),
     path('select_engineer/', views.select_engineer, name='select_engineer'),
+    path('detail_item/<str:collection_name>/<str:item_id>/', views.detail_item, name='detail_item'),
 
 ]
