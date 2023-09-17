@@ -97,6 +97,8 @@ class UWeeklyMeetingForm(forms.Form):
     meeting_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     desc_update = forms.CharField(label="Meeting Description",widget=forms.Textarea)
     meeting_outcome = forms.CharField(label="Meeting Outcome",widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'meeting_date', 'meeting_outcome','desc_update']
 
 class UForecastedOpportunityForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
@@ -104,6 +106,8 @@ class UForecastedOpportunityForm(forms.Form):
     status = generate_radio_component(status_op)
     approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'pending', 'status','approx_value', 'desc_update']
 
 class UFunnelOpportunityForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
@@ -111,35 +115,51 @@ class UFunnelOpportunityForm(forms.Form):
     status = generate_radio_component(status_op)
     approx_value = forms.FloatField(label="Approx Value ($)", min_value=0, widget=forms.TextInput(attrs={'pattern': '[0-9]*\.?[0-9]+', 'title': 'Enter a valid numeric value'}))
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    move_to_forecasted = forms.BooleanField(
+        label="Move to Forecasted Opportunity",
+        required=False,  # User is not required to select this option
+    )
+    class Meta:
+        fields = ['client_name', 'pending', 'status','approx_value', 'desc_update']
 
 class UActivityForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_act)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'pending', 'status', 'desc_update']
 
 class UBEEngagementActivityForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_be)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'pending', 'status', 'desc_update']
 
 class UCXEngagementActivityForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_cx)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'pending', 'status', 'desc_update']
 
 class UTACCaseForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
     status = generate_radio_component(status_tac)
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['client_name', 'pending', 'status', 'desc_update']
     
 class UIssuesForm(forms.Form):
     status = generate_radio_component(status_issue)
     pending = generate_radio_component(pending)
     desc_update = forms.CharField(label="Update Description", widget=forms.Textarea)
+    class Meta:
+        fields = ['pending', 'status', 'desc_update']
     
 class EngineerSelectionForm(forms.Form):
     engineer = forms.ModelChoiceField(
@@ -155,6 +175,8 @@ class ClientForm(forms.Form):
 
 class UClientForm(forms.Form):
     client_name = forms.CharField(label="Client Name", max_length=100)
+    class Meta:
+        fields = ['client_name', 'pending', 'status', 'desc_update']
 
     def clean_client_name(self):
         client_name = self.cleaned_data.get('client_name')

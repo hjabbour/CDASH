@@ -27,7 +27,7 @@ from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
-toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial']
+toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
@@ -393,7 +393,7 @@ def collection_user(user_id, collection_name,superuser=False):
         data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
     return data
 
-def update_item(request, collection_name, item_id):
+def update_itemold(request, collection_name, item_id):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
     item = collection.find_one({'_id': ObjectId(item_id)})
@@ -782,3 +782,66 @@ def check_client_exists(client_name, user_id):
 
     # If an existing client is found, return True; otherwise, return False
     return existing_client is not None
+
+def update_item(request, collection_name, item_id):
+    user_id = request.user.id  # Retrieve the logged-in user ID
+    collection = db[collection_name]
+    item = collection.find_one({'_id': ObjectId(item_id)})
+
+    # Determine the update form class based on the collection name
+    update_form_classes = {
+        'forecasted_opportunity': UForecastedOpportunityForm,
+        'funnel_opportunity': UFunnelOpportunityForm,
+        'activity': UActivityForm,
+        'meetings': UWeeklyMeetingForm,
+        'be_engagement_activity': UBEEngagementActivityForm,
+        'cx_engagement_activity': UCXEngagementActivityForm,
+        'tac_case': UTACCaseForm,
+        'issues': UIssuesForm,
+        'clients': UClientForm,
+    }
+
+    UpdateForm = update_form_classes.get(collection_name)
+
+    if not UpdateForm:
+        return HttpResponse('Invalid collection name')
+
+    if request.method == 'POST':
+        form = UpdateForm(request.POST)
+        if form.is_valid():
+            # Create an update_data dictionary from the form's cleaned data
+            update_data = form.cleaned_data
+            move_to_forecasted = form.cleaned_data.get('move_to_forecasted', False)  # Default to False if not provided
+
+            # Push a new entry to the desc_update array
+            desc_update_text = update_data.pop('desc_update', None)
+            if desc_update_text:
+                update_entry = {
+                    'text': desc_update_text,
+                    'timestamp': datetime.now()
+                }
+                collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update_entry}})
+            
+            # Update all fields in the MongoDB document with the update_data dictionary
+            collection.update_one({'_id': ObjectId(item_id)}, {'$set': update_data})
+            
+            if move_to_forecasted:
+
+                # Retrieve the data from the original record
+                record_data = item.copy()
+
+                # Delete the record from the current collection
+                collection.delete_one({'_id': ObjectId(item_id)})
+
+                # Insert the record into the forecasted_opportunity collection
+                forecasted_collection = db['forecasted_opportunity']
+                forecasted_collection.insert_one(record_data)
+            
+            return redirect('SEreview:collection_list', collection_name=collection_name)
+    else:
+        # Fill the form with data from the record to be updated
+            # Fill the form with data from the record to be updated, except for desc_update
+        initial_data = {k: v for k, v in item.items() if k != 'desc_update'}
+        form = UpdateForm(initial=initial_data)
+
+    return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
