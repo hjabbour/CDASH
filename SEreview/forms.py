@@ -148,3 +148,17 @@ class EngineerSelectionForm(forms.Form):
         empty_label=None,  # Don't allow a blank choice
     )
 
+
+class ClientForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
+
+
+class UClientForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
+
+    def clean_client_name(self):
+        client_name = self.cleaned_data.get('client_name')
+        if client_name:
+            # Capitalize the client name
+            client_name = client_name.capitalize()
+        return client_name

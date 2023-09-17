@@ -21,8 +21,8 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect, get_object_or_404
 
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
 from .conn import get_mongodb_connection
 
 ## remove status list from collection_user and put toupdatelist
@@ -37,6 +37,8 @@ fields_to_display = {
         'cx_engagement_activity' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'tac_case' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'issues' : ['Issue title', 'Creation Date','Update', 'Pending','Action'],
+        'clients' : ['Client'],
+        
          
         # Add more collections and their corresponding fields here
     }
@@ -104,6 +106,13 @@ def issues_view(request):
     data =  collection_user(user_id, 'issues')
     return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'issues','data':data,'fields_to_display':fields})
 
+def clients_view(request):
+    form = ClientForm()
+    user_id = request.user.id
+    fields = fields_to_display.get('clients', [])
+    data =  collection_user(user_id, 'clients')
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'clients','data':data,'fields_to_display':fields})
+
 
 def process_forecasted_opportunity_form(data):
     collection = db['forecasted_opportunity']
@@ -143,13 +152,20 @@ def process_tac_case_form(data):
 
 def process_issues_form(data):
     collection = db['issues']
-    # Process and save the TAC case form data
+    # Process and save the issues case form data
     # ...
     collection.insert_one(data)
     
 def process_meetings_form(data):
     collection = db['meetings']
-    # Process and save the TAC case form data
+    # Process and save the meetings form data
+    # ...
+    collection.insert_one(data)
+
+def process_client_form(data):
+    collection = db['clients']
+    data['client_name'] = data['client_name'].capitalize()
+    # Process and save client case form data
     # ...
     collection.insert_one(data)
 
@@ -322,10 +338,30 @@ def process_form_view(request, form_name):
                 }
                 process_meetings_form(data)
                 return redirect('SEreview:'+form_name)
+            
+        elif form_name == 'clients':
+            form =  ClientForm(request.POST)
+            if form.is_valid():
+                client_name = form.cleaned_data['client_name'].capitalize()
+                if not check_client_exists(client_name, user_id): 
+                
+                    data = {
+                            'user_id':user_id,
+                            'status': 'Active',
+                            'client_name': form.cleaned_data['client_name'],
+                            
+                        }
+                    process_client_form(data)
+                    return redirect('SEreview:'+form_name)  
+                else:
+                # The client already exists, handle this case as needed
+                # You can pass an error message as a URL parameter
+                    error_message = "Client already exists."
+                    return redirect('SEreview:error_page_with_message', message=error_message)  
 
     else:
         # Invalid request method, redirect to an error page or handle as needed
-        return redirect('error_page')
+        return redirect('SEreview:error_page')
 
 def collection_list(request, collection_name):
     user_id = request.user.id  # Retrieve the logged-in user ID
@@ -379,6 +415,8 @@ def update_item(request, collection_name, item_id):
         UpdateForm = UTACCaseForm
     elif collection_name == 'issues':
         UpdateForm = UIssuesForm
+    elif collection_name == 'clients':
+        UpdateForm = UClientForm
     else:
         # Handle the case when the collection name is not recognized
         return HttpResponse('Invalid collection name')
@@ -593,8 +631,10 @@ def stats_view(request, user_id=None):
     #return render(request, 'SEreview/stats.html', context)
     return render(request, 'pages/index.html', context)
 
-def error_page(request):
-    return render(request, 'SEreview/error_page.html')
+
+def error_page(request, message=None):
+    context = {'message': message}
+    return render(request, 'SEreview/error_page.html', context)
 
 def is_user_superuser(user_id):
     User = get_user_model()
@@ -729,3 +769,16 @@ def detail_item(request, collection_name, item_id):
     fields = fields_to_display.get(collection_name, [])
     
     return render(request, 'SEreview/detail_item.html', { 'item': item, 'collection_name': collection_name, 'item_id': item_id,'fields_to_display':fields})
+
+def check_client_exists(client_name, user_id):
+# Query the MongoDB collection to check if the client with the given name and user_id exists
+# You can adjust the query conditions as needed
+    collection = db['clients']
+    query = {
+        'user_id': user_id,
+        'client_name': client_name
+    }
+    existing_client = collection.find_one(query)
+
+    # If an existing client is found, return True; otherwise, return False
+    return existing_client is not None

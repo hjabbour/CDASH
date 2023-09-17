@@ -8,6 +8,7 @@ urlpatterns = [
     path('forecasted-opportunity/', views.forecasted_opportunity_view, name='forecasted_opportunity'),
     path('funnel-opportunity/', views.funnel_opportunity_view, name='funnel_opportunity'),
     path('activity/', views.activity_view, name='activity'),
+    path('clients/', views.clients_view, name='clients'),
     path('be-engagement-activity/', views.be_engagement_activity_view, name='be_engagement_activity'),
     path('cx-engagement-activity/', views.cx_engagement_activity_view, name='cx_engagement_activity'),
     path('tac-case/', views.tac_case_view, name='tac_case'),
@@ -22,6 +23,7 @@ urlpatterns = [
     path('mweeklyreview/<int:engineer_id>/', views.mweeklyreview, name='mweeklyreview'),
     path('mweeklyreview/', views.mweeklyreview, name='mweeklyreview'),
     path('error/', views.error_page, name='error_page'),
+    path('error/<str:message>/', views.error_page, name='error_page_with_message'),
     path('select_engineer/', views.select_engineer, name='select_engineer'),
     path('detail_item/<str:collection_name>/<str:item_id>/', views.detail_item, name='detail_item'),
 
