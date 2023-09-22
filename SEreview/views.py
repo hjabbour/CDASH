@@ -44,11 +44,18 @@ fields_to_display = {
     }
 
 client = get_mongodb_connection()
-
-
-
-
 db = client['CDASH']
+
+
+def get_existing_clients(self, user_id):
+    # Access your MongoDB collection
+    collection = db['clients']
+    # Fetch the client names based on user_id
+    existing_clients = collection.find({'user_id': user_id})
+    client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
+    client.close()  # Close the MongoDB connection
+    return client_list
+
 @login_required
 def meetings_view(request):
     form = WeeklyMeetingForm()

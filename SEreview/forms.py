@@ -3,6 +3,7 @@ from django.forms import formset_factory
 from django.contrib.auth.models import User
 
 
+
 # 2023 Haytham Jabbour hjabbour
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing','Services','FSO']
 BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing','FSO']
@@ -15,6 +16,7 @@ status_tac = ['Monitoring','Engaged','Closed']
 status_issue = ['Active','Resolved','Improved']
 
 pending= ['AM', 'Client','SE','BE','Partner','Leadership','TAC','CX','BU']
+
 
 def generate_dropdown_component(options):
     choices = [(option, option) for option in options]
@@ -34,6 +36,7 @@ def generate_radio_component(options):
 class ForecastedOpportunityForm(forms.Form):
     opportunity_name = forms.CharField(label="Opportunity Name", max_length=100)
     client_name = forms.CharField(label="Client Name", max_length=100)
+    
     technology=generate_multiselect_component(technologies)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_op)
