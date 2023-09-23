@@ -47,29 +47,31 @@ client = get_mongodb_connection()
 db = client['CDASH']
 
 
-def get_existing_clients(self, user_id):
+def get_existing_clients(user_id):
     # Access your MongoDB collection
     collection = db['clients']
     # Fetch the client names based on user_id
     existing_clients = collection.find({'user_id': user_id})
     client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
-    client.close()  # Close the MongoDB connection
+    #client.close()  # Close the MongoDB connection
     return client_list
 
 @login_required
 def meetings_view(request):
     form = WeeklyMeetingForm()
     user_id = request.user.id
+    existing_clients = collection.find({'user_id': user_id})
     data =  collection_user(user_id, 'meetings') 
     fields = fields_to_display.get('meetings', [])
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data,'fields_to_display':fields})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data,'fields_to_display':fields,'existing_clients':existing_clients})
 
 def forecasted_opportunity_view(request):
     form = ForecastedOpportunityForm()
     user_id = request.user.id
+    existing_clients = get_existing_clients(user_id)
     data =  collection_user(user_id, 'forecasted_opportunity')
     fields = fields_to_display.get('forecasted_opportunity', []) 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'forecasted_opportunity','data':data,'fields_to_display':fields})
+    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'forecasted_opportunity','data':data,'fields_to_display':fields,'existing_clients':existing_clients})
 
 def funnel_opportunity_view(request):
     form = FunnelOpportunityForm()
