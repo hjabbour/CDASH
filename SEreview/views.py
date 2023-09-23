@@ -122,6 +122,34 @@ def clients_view(request):
     data =  collection_user(user_id, 'clients')
     return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'clients','data':data,'fields_to_display':fields})
 
+def render_dynamic_form(request, form_name):
+    form_classes = {
+        'meetings': WeeklyMeetingForm,
+        'forecasted_opportunity': ForecastedOpportunityForm,
+        'funnel_opportunity': FunnelOpportunityForm,
+        'activity': ActivityForm,
+        'be_engagement_activity': BEEngagementActivityForm,
+        'cx_engagement_activity': CXEngagementActivityForm,
+        'tac_case': TACCaseForm,
+        'issues': IssuesForm,
+        'clients': ClientForm,
+        # Add more form classes and form names as needed
+    }
+
+    form_class = form_classes.get(form_name)
+
+    if form_class:
+        form = form_class()
+        user_id = request.user.id
+        existing_clients = get_existing_clients(user_id)  # Use get_existing_clients for all forms
+        data = collection_user(user_id, form_name)
+        fields = fields_to_display.get(form_name, [])
+        return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': form_name, 'data': data, 'fields_to_display': fields, 'existing_clients': existing_clients})
+    else:
+        # Handle cases where form_name is not found (e.g., return an error page)
+        return HttpResponseNotFound("Form not found")
+
+
 
 def process_forecasted_opportunity_form(data):
     collection = db['forecasted_opportunity']

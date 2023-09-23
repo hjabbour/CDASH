@@ -3,17 +3,18 @@ from . import views
 # 2023 Haytham Jabbour hjabbour
 app_name = 'SEreview'
 
+
 urlpatterns = [
     path('', views.stats_view, name='stats'),
-    path('forecasted-opportunity/', views.forecasted_opportunity_view, name='forecasted_opportunity'),
-    path('funnel-opportunity/', views.funnel_opportunity_view, name='funnel_opportunity'),
-    path('activity/', views.activity_view, name='activity'),
-    path('clients/', views.clients_view, name='clients'),
-    path('be-engagement-activity/', views.be_engagement_activity_view, name='be_engagement_activity'),
-    path('cx-engagement-activity/', views.cx_engagement_activity_view, name='cx_engagement_activity'),
-    path('tac-case/', views.tac_case_view, name='tac_case'),
-    path('issues/', views.issues_view, name='issues'),
-    path('meetings/', views.meetings_view, name='meetings'),
+    path('forecasted-opportunity/', views.render_dynamic_form, {'form_name': 'forecasted_opportunity'}, name='forecasted_opportunity'),
+    path('funnel-opportunity/', views.render_dynamic_form, {'form_name': 'funnel_opportunity'}, name='funnel_opportunity'),
+    path('activity/', views.render_dynamic_form, {'form_name': 'activity'}, name='activity'),
+    path('clients/', views.render_dynamic_form, {'form_name': 'clients'}, name='clients'),
+    path('be-engagement-activity/', views.render_dynamic_form, {'form_name': 'be_engagement_activity'}, name='be_engagement_activity'),
+    path('cx-engagement-activity/', views.render_dynamic_form, {'form_name': 'cx_engagement_activity'}, name='cx_engagement_activity'),
+    path('tac-case/', views.render_dynamic_form, {'form_name': 'tac_case'}, name='tac_case'),
+    path('issues/', views.render_dynamic_form, {'form_name': 'issues'}, name='issues'),
+    path('meetings/', views.render_dynamic_form, {'form_name': 'meetings'}, name='meetings'),
     path('process-form/<str:form_name>/', views.process_form_view, name='process_form'),
     path('collections/<str:collection_name>/', views.collection_list, name='collection_list'),
     path('update/<str:collection_name>/<str:item_id>/', views.update_item, name='update_item'),
@@ -26,5 +27,4 @@ urlpatterns = [
     path('error/<str:message>/', views.error_page, name='error_page_with_message'),
     path('select_engineer/', views.select_engineer, name='select_engineer'),
     path('detail_item/<str:collection_name>/<str:item_id>/', views.detail_item, name='detail_item'),
-
 ]
