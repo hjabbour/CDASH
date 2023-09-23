@@ -75,43 +75,37 @@
   <!-- form_template.html -->
 
 
-<form method="post" action="{% url 'SEreview:process_form' form_name %}">
-  {% csrf_token %}
-  <table class="table">
-      {% for field in form %}
-      <tr>
-          <td>{{ field.label_tag }}</td>
-          <td>
-              {% if field.name == 'client_name' %}
-                  <select name="{{ field.name }}">
-                      <option value="">Select a client</option>
-                      {% for client_tuple in existing_clients %}
-                            <option value="{{ client_tuple.0 }}">{{ client_tuple.0 }}</option>
-                      {% endfor %}
-                  </select>
-                  {% if field.errors %}
-                      <ul class="errors">
-                          {% for error in field.errors %}
-                          <li> {{ error }}</li>
-                          {% endfor %}
-                      </ul>
-                  {% endif %}
-              {% else %}
-                  {{ field }}
-                  {% if field.errors %}
-                      <ul class="errors">
-                          {% for error in field.errors %}
-                          <li> {{ error }}</li>
-                          {% endfor %}
-                      </ul>
-                  {% endif %}
-              {% endif %}
-          </td>
-      </tr>
-      {% endfor %}
-  </table>
-  <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+  <form method="post" action="{% url 'SEreview:process_form' form_name %}">
+    {% csrf_token %}
+    <table class="table">
+        {% for field in form %}
+        <tr>
+            <td>{{ field.label_tag }}</td>
+            <td>
+                {% if field.name == 'client_name' and form_name != 'clients' %}
+                    <select name="{{ field.name }}">
+                        <option value="">Select a client</option>
+                        {% for client_tuple in existing_clients %}
+                              <option value="{{ client_tuple.0 }}">{{ client_tuple.0 }}</option>
+                        {% endfor %}
+                    </select>
+                {% else %}
+                    {{ field }}
+                {% endif %}
+                {% if field.errors %}
+                    <ul class="errors">
+                        {% for error in field.errors %}
+                        <li> {{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+  
 
 <!-- form_template.html -->
 

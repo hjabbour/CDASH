@@ -57,71 +57,6 @@ def get_existing_clients(user_id):
     return client_list
 
 @login_required
-def meetings_view(request):
-    form = WeeklyMeetingForm()
-    user_id = request.user.id
-    existing_clients = collection.find({'user_id': user_id})
-    data =  collection_user(user_id, 'meetings') 
-    fields = fields_to_display.get('meetings', [])
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'meetings','data':data,'fields_to_display':fields,'existing_clients':existing_clients})
-
-def forecasted_opportunity_view(request):
-    form = ForecastedOpportunityForm()
-    user_id = request.user.id
-    existing_clients = get_existing_clients(user_id)
-    data =  collection_user(user_id, 'forecasted_opportunity')
-    fields = fields_to_display.get('forecasted_opportunity', []) 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'forecasted_opportunity','data':data,'fields_to_display':fields,'existing_clients':existing_clients})
-
-def funnel_opportunity_view(request):
-    form = FunnelOpportunityForm()
-    user_id = request.user.id
-    data =  collection_user(user_id, 'funnel_opportunity') 
-    fields = fields_to_display.get('funnel_opportunity', []) 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'funnel_opportunity','data':data,'fields_to_display':fields})
-
-def activity_view(request):
-    form = ActivityForm()
-    user_id = request.user.id
-    data =  collection_user(user_id, 'activity') 
-    fields = fields_to_display.get('activity', []) 
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'activity','data':data,'fields_to_display':fields})
-
-def be_engagement_activity_view(request):
-    form = BEEngagementActivityForm()
-    user_id = request.user.id
-    fields = fields_to_display.get('be_engagement_activity', []) 
-    data =  collection_user(user_id, 'be_engagement_activity')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'be_engagement_activity','data':data,'fields_to_display':fields})
-
-def cx_engagement_activity_view(request):
-    form = CXEngagementActivityForm()
-    user_id = request.user.id
-    fields = fields_to_display.get('cx_engagement_activity', []) 
-    data =  collection_user(user_id, 'cx_engagement_activity')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'cx_engagement_activity','data':data,'fields_to_display':fields})
-
-def tac_case_view(request):
-    form = TACCaseForm()
-    user_id = request.user.id
-    fields = fields_to_display.get('tac_case', [])
-    data =  collection_user(user_id, 'tac_case')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'tac_case','data':data,'fields_to_display':fields})
-
-def issues_view(request):
-    form = IssuesForm()
-    user_id = request.user.id
-    fields = fields_to_display.get('issues', [])
-    data =  collection_user(user_id, 'issues')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'issues','data':data,'fields_to_display':fields})
-
-def clients_view(request):
-    form = ClientForm()
-    user_id = request.user.id
-    fields = fields_to_display.get('clients', [])
-    data =  collection_user(user_id, 'clients')
-    return render(request, 'SEreview/form_template.html', {'form': form, 'form_name': 'clients','data':data,'fields_to_display':fields})
-
 def render_dynamic_form(request, form_name):
     form_classes = {
         'meetings': WeeklyMeetingForm,
@@ -150,61 +85,37 @@ def render_dynamic_form(request, form_name):
         return HttpResponseNotFound("Form not found")
 
 
+def process_form_data(form_name, data):
+    # Define a mapping of form names to collection names
+    form_to_collection = {
+        'forecasted_opportunity': 'forecasted_opportunity',
+        'funnel_opportunity': 'funnel_opportunity',
+        'activity': 'activity',
+        'be_engagement_activity': 'be_engagement_activity',
+        'cx_engagement_activity': 'cx_engagement_activity',
+        'tac_case': 'tac_case',
+        'issues': 'issues',
+        'meetings': 'meetings',
+        'clients': 'clients',
+    }
 
-def process_forecasted_opportunity_form(data):
-    collection = db['forecasted_opportunity']
-    # Process and save the forecasted opportunity form data
-    # ...
-    collection.insert_one(data)
+    # Get the collection name based on the form name
+    collection_name = form_to_collection.get(form_name)
 
-def process_funnel_opportunity_form(data):
-    collection = db['funnel_opportunity']
-    # Process and save the funnel opportunity form data
-    # ...
-    collection.insert_one(data)
-    
-def process_activity_form(data):
-    collection = db['activity']
-    # Process and save the funnel opportunity form data
-    # ...
-    collection.insert_one(data)
+    if collection_name:
+        collection = db[collection_name]
 
-def process_be_engagement_activity_form(data):
-    collection = db['be_engagement_activity']
-    # Process and save the BE engagement activity form data
-    # ...
-    collection.insert_one(data)
+        if form_name == 'clients':
+            data['client_name'] = data['client_name'].capitalize()
+           
 
-def process_cx_engagement_activity_form(data):
-    collection = db['cx_engagement_activity']
-    # Process and save the CX engagement activity form data
-    # ...
-    collection.insert_one(data)
+        # Process and save the form data
+        # ...
+        collection.insert_one(data)
+    else:
+        # Handle cases where the form name is not found (e.g., log an error)
+        print(f"Collection not found for form name: {form_name}")
 
-def process_tac_case_form(data):
-    collection = db['tac_case']
-    # Process and save the TAC case form data
-    # ...
-    collection.insert_one(data)
-
-def process_issues_form(data):
-    collection = db['issues']
-    # Process and save the issues case form data
-    # ...
-    collection.insert_one(data)
-    
-def process_meetings_form(data):
-    collection = db['meetings']
-    # Process and save the meetings form data
-    # ...
-    collection.insert_one(data)
-
-def process_client_form(data):
-    collection = db['clients']
-    data['client_name'] = data['client_name'].capitalize()
-    # Process and save client case form data
-    # ...
-    collection.insert_one(data)
 
 @login_required
 def process_form_view(request, form_name):
@@ -230,7 +141,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_forecasted_opportunity_form(data)
+                #process_forecasted_opportunity_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
 
         elif form_name == 'funnel_opportunity':
@@ -252,7 +164,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_funnel_opportunity_form(data)
+                #process_funnel_opportunity_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
             
         elif form_name == 'activity':
@@ -273,7 +186,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_activity_form(data)
+                #process_activity_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
         
         elif form_name == 'be_engagement_activity':
@@ -294,7 +208,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_be_engagement_activity_form(data)
+                #process_be_engagement_activity_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
 
         elif form_name == 'cx_engagement_activity':
@@ -315,7 +230,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_cx_engagement_activity_form(data)
+                #process_cx_engagement_activity_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
 
         elif form_name == 'tac_case':
@@ -334,7 +250,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_tac_case_form(data)
+                #process_tac_case_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
             
         elif form_name == 'issues':
@@ -352,7 +269,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_issues_form(data)
+                #process_issues_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
             
         elif form_name == 'meetings':
@@ -373,7 +291,8 @@ def process_form_view(request, form_name):
                         }
                                     ]
                 }
-                process_meetings_form(data)
+                #process_meetings_form(data)
+                process_form_data(form_name, data)
                 return redirect('SEreview:'+form_name)
             
         elif form_name == 'clients':
@@ -388,7 +307,8 @@ def process_form_view(request, form_name):
                             'client_name': form.cleaned_data['client_name'],
                             
                         }
-                    process_client_form(data)
+                    #process_client_form(data)
+                    process_form_data(form_name, data)
                     return redirect('SEreview:'+form_name)  
                 else:
                 # The client already exists, handle this case as needed
