@@ -769,6 +769,10 @@ def update_item(request, collection_name, item_id):
             # Create an update_data dictionary from the form's cleaned data
             update_data = form.cleaned_data
             move_to_forecasted = form.cleaned_data.get('move_to_forecasted', False)  # Default to False if not provided
+            update_data['meeting_date'] = datetime(year=form.cleaned_data['meeting_date'].year,month=form.cleaned_data['meeting_date'].month,day=form.cleaned_data['meeting_date'].day,)
+            
+
+
 
             # Push a new entry to the desc_update array
             desc_update_text = update_data.pop('desc_update', None)
@@ -778,6 +782,8 @@ def update_item(request, collection_name, item_id):
                     'timestamp': datetime.now()
                 }
                 collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update_entry}})
+                
+            
             
             # Update all fields in the MongoDB document with the update_data dictionary
             collection.update_one({'_id': ObjectId(item_id)}, {'$set': update_data})
