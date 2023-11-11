@@ -774,6 +774,7 @@ def update_item(request, collection_name, item_id):
 
 
 
+
             # Push a new entry to the desc_update array
             desc_update_text = update_data.pop('desc_update', None)
             if desc_update_text:
