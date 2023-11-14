@@ -769,8 +769,14 @@ def update_item(request, collection_name, item_id):
             # Create an update_data dictionary from the form's cleaned data
             update_data = form.cleaned_data
             move_to_forecasted = form.cleaned_data.get('move_to_forecasted', False)  # Default to False if not provided
-            update_data['meeting_date'] = datetime(year=form.cleaned_data['meeting_date'].year,month=form.cleaned_data['meeting_date'].month,day=form.cleaned_data['meeting_date'].day,)
             
+                # Check if 'meeting_date' exists in the form's cleaned data
+            if 'meeting_date' in form.cleaned_data and form.cleaned_data['meeting_date']:
+                update_data['meeting_date'] = datetime(
+                    year=form.cleaned_data['meeting_date'].year,
+                    month=form.cleaned_data['meeting_date'].month,
+                    day=form.cleaned_data['meeting_date'].day,
+                )            
 
 
 
