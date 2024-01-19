@@ -56,143 +56,160 @@
     </div>
 
     <div class="col-md-6">
-      <div class="card">
-          <div class="card-header">
-              <h5>Funnel Creation</h5>
-          </div>
-          <div class="card-block">
-              <div class="table-responsive">
-                  <table class="table table-hover">
-                      <thead>
-                          <tr>
-                              <th>Client/Opportunity</th>
-          
-                              <th>Description Update</th>
-                              <th>Approx Value</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {% for item in funnel_opportunities %}
-                          <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-                              <td>{{ item.client_name }} <p>{{ item.opportunity_name }}</p></td>
-                            
-                              <td>
-                                  {% for update in item.desc_update %}
-                                  {% if forloop.last %}
-                                
-                                  <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                  {% endif %}
-                                  {% endfor %}
-                              </td>
-                              <td>{{ item.approx_value }}</td>
-                          </tr>
-                          {% endfor %}
-                      </tbody>
-                  </table>
-              </div>
-              <div class="mt-3">
-                  <h6>Total Funnel Amount: {{ funnel_value }}</h6>
-                  <h6>Count: {{ funnel_count }}</h6>
-              </div>
-          </div>
-      </div>
-  </div>
-</div>
+        <div class="card">
+            <div class="card-header">
+                <h5>Funnel Creation</h5>
+            </div>
+            <div class="card-block">
+                <ul class="nav nav-tabs" id="funnelTabs" role="tablist">
+                    {% for month, opportunities in funnel_opportunities.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="funnel-{{ month|slugify }}-tab" data-toggle="tab" href="#funnel-{{ month|slugify }}" role="tab" aria-controls="funnel-{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="funnelTabsContent">
+                    {% for month, opportunities in funnel_opportunities.items %}
+                        <div class="tab-pane fade" id="funnel-{{ month|slugify }}" role="tabpanel" aria-labelledby="funnel-{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Opportunity</th>
+                                            <th>Description Update</th>
+                                            <th>Approx Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in opportunities %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                                                <td>{{ item.client_name }}<p>{{ item.opportunity_name }}</p></td>
+                                                <td>
+                                                    {% for update in item.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td>{{ item.approx_value }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-3">
+                    <h6>Total Funnel Amount: {{ funnel_value }}</h6>
+                    <h6>Count: {{ funnel_count }}</h6>
+                </div>
+            </div>
+        </div>
+    </div>
  <!--[  Opportuntities  and funnel engages tac ] end-->
  <!--[  CX  and BE engagement  ] start-->
 <div class="row">
-  <div class="col-md-6">
-    <div class="card">
-        <div class="card-header">
-            <h5>BE Engagement</h5>
-        </div>
-        <div class="card-block">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Client/Opportunity</th>
-                           
-                            <th>Pending</th>
-                            <th>Description Update</th>
-                            <th>BE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in be_engagements %}
-                        <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-
-                            <td>{{ item.client_name }}<p>{{ item.opportunity_name }}</p></td>
-                           
-                            <td>{{ item.pending}}</td>
-                            
-                            <td>
-                                {% for update in item.desc_update %}
-                                {% if forloop.last %}
-                        
-                                <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                {% endif %}
-                                {% endfor %}
-                            </td>
-                            <td>{{ item.be_name }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>BE Engagement</h5>
             </div>
-            <div class="mt-3">
-              
-            </div>
-        </div>
-    </div>
-  </div>
-  <div class="col-md-6">
-    <div class="card">
-        <div class="card-header">
-            <h5>CX Engagement</h5>
-        </div>
-        <div class="card-block">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>Client/Opportunity</th>
-                           
-                            <th>Pending</th>
-                            <th>Description Update</th>
-                            <th>BE</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for item in cx_engagements %}
-                        <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-
-                            <td>{{ item.client_name }}<p>{{ item.opportunity_name }}</p></td>
-                           
-                            <td>{{ item.pending}}</td>
-                            
-                            <td>
-                                {% for update in item.desc_update %}
-                                {% if forloop.last %}
-                        
-                                <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                {% endif %}
-                                {% endfor %}
-                            </td>
-                            <td>{{ item.cx_name }}</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-            <div class="mt-3">
-              
+            <div class="card-block">
+                <ul class="nav nav-tabs" id="beEngagementTabs" role="tablist">
+                    {% for month, engagements in be_engagements.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="be-{{ month|slugify }}-tab" data-toggle="tab" href="#be-{{ month|slugify }}" role="tab" aria-controls="be-{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="beEngagementTabsContent">
+                    {% for month, engagements in be_engagements.items %}
+                        <div class="tab-pane fade" id="be-{{ month|slugify }}" role="tabpanel" aria-labelledby="be-{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Opportunity</th>
+                                            <th>Pending</th>
+                                            <th>Description Update</th>
+                                            <th>BE</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for engagement in engagements %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in engagement.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                                                <td>{{ engagement.client_name }}<p>{{ engagement.opportunity_name }}</p></td>
+                                                <td>{{ engagement.pending }}</td>
+                                                <td>
+                                                    {% for update in engagement.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td>{{ engagement.be_name }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
-  </div>
-
-</div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>CX Engagement</h5>
+            </div>
+            <div class="card-block">
+                <ul class="nav nav-tabs" id="cxEngagementTabs" role="tablist">
+                    {% for month, engagements in cx_engagements.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="cx-{{ month|slugify }}-tab" data-toggle="tab" href="#cx-{{ month|slugify }}" role="tab" aria-controls="cx-{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="cxEngagementTabsContent">
+                    {% for month, engagements in cx_engagements.items %}
+                        <div class="tab-pane fade" id="cx-{{ month|slugify }}" role="tabpanel" aria-labelledby="cx-{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Opportunity</th>
+                                            <th>Pending</th>
+                                            <th>Description Update</th>
+                                            <th>CX</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for engagement in engagements %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in engagement.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                                                <td>{{ engagement.client_name }}<p>{{ engagement.opportunity_name }}</p></td>
+                                                <td>{{ engagement.pending }}</td>
+                                                <td>
+                                                    {% for update in engagement.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td>{{ engagement.cx_name }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
  <!--[  CX  and BE engagement  ] end-->
 
   <!--[  TAC and Issues  ] start-->
@@ -278,78 +295,98 @@
   <!--[  Meetings  and other ] start-->
 <div class="row">
     <div class="col-md-6">
-     <div class="card">
-         <div class="card-header">
-             <h5>Customer facing meetings </h5>
-         </div>
-         <div class="card-block">
-             <div class="table-responsive">
-                 <table class="table table-hover">
-                     <thead>
-                         <tr>
-                             <th>Client</th>
-                             <th>meeting Date</th>
-                             <th>Update Date</th>
-                         </tr>
-                     </thead>
-                     <tbody>
-                         {% for item in meetings %}
-                         <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
-                             <td>{{ item.client_name }} <p>{{ item.case_name }}</p></td>
-                             <td>{{ item.meeting_date|date:"M d, Y"}}</td>
-                             <td>
-                                 {% for update in item.desc_update %}
-                               
-                                 <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                 {% endfor %}
-                             </td>
-                         </tr>
-                         {% endfor %}
-                     </tbody>
-                 </table>
-             </div>
-         </div>
-     </div>
-
+        <div class="card">
+            <div class="card-header">
+                <h5>Customer Facing Meetings</h5>
+            </div>
+            <div class="card-block">
+                <ul class="nav nav-tabs" id="meetingsTabs" role="tablist">
+                    {% for month, meetings in meetings.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="meetings-{{ month|slugify }}-tab" data-toggle="tab" href="#meetings-{{ month|slugify }}" role="tab" aria-controls="meetings-{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="meetingsTabsContent">
+                    {% for month, meetings in meetings.items %}
+                        <div class="tab-pane fade" id="meetings-{{ month|slugify }}" role="tabpanel" aria-labelledby="meetings-{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client</th>
+                                            <th>Meeting Date</th>
+                                            <th>Update Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for meeting in meetings %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in meeting.desc_update %}<p class='text-dark'>{{ update.text }}</p>{% endfor %}">
+                                                <td>{{ meeting.client_name }}<p>{{ meeting.case_name }}</p></td>
+                                                <td>{{ meeting.meeting_date|date:"M d, Y" }}</td>
+                                                <td>
+                                                    {% for update in meeting.desc_update %}
+                                                        <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                    {% endfor %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
     </div>
     <div class="col-md-6">
         <div class="card">
             <div class="card-header">
-                <h5>Activities  </h5>
+                <h5>Activities</h5>
             </div>
             <div class="card-block">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Client/Activity</th>
-                                <th>Activity Date</th>
-                                <th>Update Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in activities %}
-                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %} <p class='text-dark' >{{ update.text }}</p>{% endfor %} </p>{{ item.meeting_outcome }}">
-                                <td>{{ item.client_name }} <p>{{ item.activity_name }}</p></td>
-                                <td>{{ item.create_date|date:"M d, Y"}}</td>
-                                <td>
-                                    {% for update in item.desc_update %}
-                                    {% if forloop.last %}
-                                    <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                    {% endif %}
-                                    {% endfor %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                <ul class="nav nav-tabs" id="activitiesTabs" role="tablist">
+                    {% for month, activities in activities.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="activities-{{ month|slugify }}-tab" data-toggle="tab" href="#activities-{{ month|slugify }}" role="tab" aria-controls="activities-{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="activitiesTabsContent">
+                    {% for month, activities in activities.items %}
+                        <div class="tab-pane fade" id="activities-{{ month|slugify }}" role="tabpanel" aria-labelledby="activities-{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Activity</th>
+                                            <th>Activity Date</th>
+                                            <th>Update Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for activity in activities %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in activity.desc_update %}<p class='text-dark'>{{ update.text }}</p>{% endfor %}">
+                                                <td>{{ activity.client_name }}<p>{{ activity.activity_name }}</p></td>
+                                                <td>{{ activity.create_date|date:"M d, Y" }}</td>
+                                                <td>
+                                                    {% for update in activity.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
-   
     </div>
-    
-  
-</div>
     <!--[  Meetings and other  ] end-->
 {% endblock content %}

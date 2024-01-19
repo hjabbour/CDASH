@@ -628,9 +628,14 @@ def weeklyreview(request,engineer_id=None):
     tac_cases = list(collection_user(user_id, 'tac_case'))
     activities = list(collection_user(user_id, 'activity'))
     
+    
     ## group data by month 
     forecasted_opportunities = group_data_by_month(forecasted_opportunities)
-    
+    funnel_opportunities = group_data_by_month(funnel_opportunities)
+    be_engagements = group_data_by_month(be_engagements)
+    cx_engagements = group_data_by_month(cx_engagements)
+    meetings = group_data_by_month(all_meetings)
+    activities = group_data_by_month(activities)
     # Calculate the count and value of active forecasted opportunities
     forecast_count, forecast_value = count_active_forecasted_opportunities(user_id)
     
