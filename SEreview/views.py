@@ -25,6 +25,9 @@ from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
 from .conn import get_mongodb_connection
 
+from collections import defaultdict
+
+
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
 toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
@@ -625,6 +628,8 @@ def weeklyreview(request,engineer_id=None):
     tac_cases = list(collection_user(user_id, 'tac_case'))
     activities = list(collection_user(user_id, 'activity'))
     
+    ## group data by month 
+    forecasted_opportunities = group_data_by_month(forecasted_opportunities)
     
     # Calculate the count and value of active forecasted opportunities
     forecast_count, forecast_value = count_active_forecasted_opportunities(user_id)
@@ -815,3 +820,22 @@ def update_item(request, collection_name, item_id):
         form = UpdateForm(initial=initial_data)
 
     return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
+
+def group_data_by_month_timestamp(data):
+    grouped_data = {}
+    for entry in data:
+        month_key = datetime.utcfromtimestamp(entry['create_date']).strftime('%B %Y')
+        if month_key not in grouped_data:
+            grouped_data[month_key] = []
+        grouped_data[month_key].append(entry)
+    return grouped_data
+
+def group_data_by_month(data):
+    grouped_data = defaultdict(list)
+
+    for entry in data:
+        # Use strftime directly on datetime object
+        month_key = entry['create_date'].strftime('%B %Y')
+        grouped_data[month_key].append(entry)
+
+    return dict(grouped_data)

@@ -10,42 +10,46 @@
                 <h5>Forecasted Opportunities</h5>
             </div>
             <div class="card-block">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Client/Opportunity</th>
-                               
-                                <th>Pending</th>
-                                <th>Description Update</th>
-                                <th>Approx Value</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for item in forecasted_opportunities %}
-                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-
-                                <td>{{ item.client_name }}<p>{{ item.opportunity_name }}</p></td>
-                               
-                                <td>{{ item.pending}}</td>
-                                
-                                <td>
-                                    {% for update in item.desc_update %}
-                                    {% if forloop.last %}
-                            
-                                    <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
-                                    {% endif %}
-                                    {% endfor %}
-                                </td>
-                                <td>{{ item.approx_value }}</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-3">
-                  <h6>Total Forecasted Amount: {{ forecast_value }}</h6>
-                  <h6>Count: {{ forecast_count }}</h6>
+                <ul class="nav nav-tabs" id="opportunityTabs" role="tablist">
+                    {% for month, opportunities in forecasted_opportunities.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="{{ month|slugify }}-tab" data-toggle="tab" href="#{{ month|slugify }}" role="tab" aria-controls="{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="opportunityTabsContent">
+                    {% for month, opportunities in forecasted_opportunities.items %}
+                        <div class="tab-pane fade" id="{{ month|slugify }}" role="tabpanel" aria-labelledby="{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Opportunity</th>
+                                            <th>Pending</th>
+                                            <th>Description Update</th>
+                                            <th>Approx Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for opportunity in opportunities %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in opportunity.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                                                <td>{{ opportunity.client_name }}<p>{{ opportunity.opportunity_name }}</p></td>
+                                                <td>{{ opportunity.pending }}</td>
+                                                <td>
+                                                    {% for update in opportunity.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td>{{ opportunity.approx_value }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
