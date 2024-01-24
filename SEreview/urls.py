@@ -23,6 +23,7 @@ urlpatterns = [
     path('weeklyreview/', views.weeklyreview, name='weeklyreview'),
     path('mweeklyreview/<int:engineer_id>/', views.mweeklyreview, name='mweeklyreview'),
     path('mweeklyreview/', views.mweeklyreview, name='mweeklyreview'),
+    path('engineerstats/', views.engineer_stats, name='engineer_stats'),
     path('error/', views.error_page, name='error_page'),
     path('error/<str:message>/', views.error_page, name='error_page_with_message'),
     path('select_engineer/', views.select_engineer, name='select_engineer'),

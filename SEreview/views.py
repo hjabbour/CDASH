@@ -844,3 +844,190 @@ def group_data_by_month(data):
         grouped_data[month_key].append(entry)
 
     return dict(grouped_data)
+from pymongo import MongoClient
+
+
+
+def countsum_collection(collection_name, user_id=None, value=True):
+    query = {}
+    if user_id:
+        query['user_id'] = user_id
+
+    collection = db[collection_name]
+
+    if value:
+        # Count the number of records and calculate their sum
+        result = collection.aggregate([
+            {'$match': query},
+            {'$group': {'_id': None, 'count': {'$sum': 1}, 'sum_value': {'$sum': '$approx_value'}}}
+        ])
+    else:
+        # Count only the number of records
+        result = collection.aggregate([
+            {'$match': query},
+            {'$group': {'_id': None, 'count': {'$sum': 1}}}
+        ])
+
+    # Extract the count and sum_value from the result
+    try:
+        result_dict = next(result)
+        count = result_dict.get('count', 0)
+        sum_value = result_dict.get('sum_value', None) if value else None
+    except StopIteration:
+        count = 0
+        sum_value = None
+
+    return {'count': count, 'sum_value': sum_value}
+
+
+def count_updates(collection_name, user_id=None):
+    query = {}
+    if user_id:
+        query['user_id'] = user_id
+
+    collection = db[collection_name]
+    total_updates = collection.aggregate([
+        {'$match': query},
+        {'$project': {'update_count': {'$size': '$desc_update'}}},
+        {'$group': {'_id': None, 'total_updates': {'$sum': '$update_count'}}}
+    ])
+
+    total_updates = total_updates.next()['total_updates'] if total_updates.alive else 0
+
+    return total_updates
+
+
+def engineer_stats(request):
+    engineer_id = request.user.id  # Use the request user ID as engineer_id
+
+    # Forecasted Opportunities
+    forecasted_opportunity_result = countsum_collection('forecasted_opportunity', engineer_id, value=True)
+    user_forecast_total_count = forecasted_opportunity_result['count']
+    user_forecast_total_value = forecasted_opportunity_result['sum_value']
+
+    all_users_forecasted_opportunity_result = countsum_collection('forecasted_opportunity', None, value=True)
+    all_users_forecasted_total_count = all_users_forecasted_opportunity_result['count']
+    all_users_forecasted_total_value = all_users_forecasted_opportunity_result['sum_value']
+
+    user_forecasted_updates = count_updates('forecasted_opportunity', engineer_id)
+    all_users_forecasted_updates = count_updates('forecasted_opportunity', None)
+
+    # Funnel Opportunities
+    funnel_opportunity_result = countsum_collection('funnel_opportunity', None, value=True)
+    funnel_total_count = funnel_opportunity_result['count']
+    funnel_total_value = funnel_opportunity_result['sum_value']
+
+    funnel_user_opportunity_result = countsum_collection('funnel_opportunity', engineer_id, value=True)
+    funnel_user_count = funnel_user_opportunity_result['count']
+    funnel_user_value = funnel_user_opportunity_result['sum_value']
+
+    funnel_updates = count_updates('funnel_opportunity', engineer_id)
+    all_users_funnel_updates = count_updates('funnel_opportunity', None)
+
+    # Meetings
+    meetings_result = countsum_collection('meetings', None, value=False)
+    meetings_total_count = meetings_result['count']
+    
+    meetings_user_result = countsum_collection('meetings', engineer_id, value=False)
+    meetings_user_count = meetings_user_result['count']
+
+    meetings_updates = count_updates('meetings', engineer_id)
+    all_users_meetings_updates = count_updates('meetings', None)
+
+    # BE Engagements
+    be_result = countsum_collection('be_engagement_activity', None, value=False)
+    be_total_count = be_result['count']
+
+    be_user_result = countsum_collection('be_engagement_activity', engineer_id, value=False)
+    be_user_count = be_user_result['count']
+
+    be_updates = count_updates('be_engagement_activity', engineer_id)
+    all_users_be_updates = count_updates('be_engagement_activity', None)
+
+    # CX Engagements
+    cx_result = countsum_collection('cx_engagement_activity', None, value=False)
+    cx_total_count = cx_result['count']
+
+    cx_user_result = countsum_collection('cx_engagement_activity', engineer_id, value=False)
+    cx_user_count = cx_user_result['count']
+
+    cx_updates = count_updates('cx_engagement_activity', engineer_id)
+    all_users_cx_updates = count_updates('cx_engagement_activity', None)
+
+    # Issues
+    issues_result = countsum_collection('issues', None, value=False)
+    issues_total_count = issues_result['count']
+
+    issues_user_result = countsum_collection('issues', engineer_id, value=False)
+    issues_user_count = issues_user_result['count']
+
+    issues_updates = count_updates('issues', engineer_id)
+    all_users_issues_updates = count_updates('issues', None)
+
+    # TAC Cases
+    tac_result = countsum_collection('tac_case', None, value=False)
+    tac_total_count = tac_result['count']
+
+    tac_user_result = countsum_collection('tac_case', engineer_id, value=False)
+    tac_user_count = tac_user_result['count']
+
+    tac_updates = count_updates('tac_case', engineer_id)
+    all_users_tac_updates = count_updates('tac_case', None)
+
+    # Activities
+    activities_result = countsum_collection('activity', None, value=False)
+    activities_total_count = activities_result['count']
+
+    activities_user_result = countsum_collection('activity', engineer_id, value=False)
+    activities_user_count = activities_user_result['count']
+
+    activities_updates = count_updates('activity', engineer_id)
+    all_users_activities_updates = count_updates('activity', None)
+
+    context = {
+        'user_forecast_total_count': user_forecast_total_count,
+        'user_forecast_total_value': user_forecast_total_value,
+        'all_users_forecasted_total_count': all_users_forecasted_total_count,
+        'all_users_forecasted_total_value': all_users_forecasted_total_value,
+        'user_forecasted_updates': user_forecasted_updates,
+        'all_users_forecasted_updates': all_users_forecasted_updates,
+
+        'funnel_total_count': funnel_total_count,
+        'funnel_total_value': funnel_total_value,
+        'funnel_user_count': funnel_user_count,
+        'funnel_user_value': funnel_user_value,
+        'funnel_updates': funnel_updates,
+        'all_users_funnel_updates': all_users_funnel_updates,
+
+        'meetings_total_count': meetings_total_count,
+        'meetings_user_count': meetings_user_count,
+        'meetings_updates': meetings_updates,
+        'all_users_meetings_updates': all_users_meetings_updates,
+
+        'be_total_count': be_total_count,
+        'be_user_count': be_user_count,
+        'be_updates': be_updates,
+        'all_users_be_updates': all_users_be_updates,
+
+        'cx_total_count': cx_total_count,
+        'cx_user_count': cx_user_count,
+        'cx_updates': cx_updates,
+        'all_users_cx_updates': all_users_cx_updates,
+
+        'issues_total_count': issues_total_count,
+        'issues_user_count': issues_user_count,
+        'issues_updates': issues_updates,
+        'all_users_issues_updates': all_users_issues_updates,
+
+        'tac_total_count': tac_total_count,
+        'tac_user_count': tac_user_count,
+        'tac_updates': tac_updates,
+        'all_users_tac_updates': all_users_tac_updates,
+
+        'activities_total_count': activities_total_count,
+        'activities_user_count': activities_user_count,
+        'activities_updates': activities_updates,
+        'all_users_activities_updates': all_users_activities_updates,
+    }
+
+    return render(request, 'SEreview/mystats.html', context)

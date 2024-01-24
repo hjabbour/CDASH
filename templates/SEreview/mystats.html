@@ -1,0 +1,144 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+    <!--[ Forecasted Opportunities and Funnel Engages TAC ] start-->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Forecasted Opportunities</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for Forecasted Opportunities -->
+                    <p>My Forecasted Opportunities Count: {{ user_forecast_total_count }}</p>
+                    <p>My Forecasted Opportunities Value: {{ user_forecast_total_value }}</p>
+                    <p>Team Forecasted Opportunities Count: {{ all_users_forecasted_total_count }}</p>
+                    <p>Team Forecasted Opportunities Value: {{ all_users_forecasted_total_value }}</p>
+                    <p>My Forecasted Opportunities Updates: {{ user_forecasted_updates }}</p>
+                    <p>Team Forecasted Opportunities Updates: {{ all_users_forecasted_updates }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Funnel Creation</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for Funnel Creation -->
+                    <p>My Funnel Amount: {{ funnel_user_value }}</p>
+                    <p>My Funnel Count: {{ funnel_user_count }}</p>
+                    <p>Team Funnel Amount: {{ funnel_total_value }}</p>
+                    <p>Team Funnel Count: {{ funnel_total_count }}</p>
+                    <p>My Funnel Updates: {{ funnel_updates }}</p>
+                    <p>Team Funnel Updates: {{ all_users_funnel_updates }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--[ Forecasted Opportunities and Funnel Engages TAC ] end-->
+
+    <!--[ CX and BE Engagement ] start-->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>BE Engagement</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for BE Engagement -->
+                    <p>My BE Engagements Count: {{ be_user_count }}</p>
+                    <p>Team BE Engagements Count: {{ be_total_count }}</p>
+                    <p>My BE Engagements Updates: {{ be_updates }}</p>
+                    <p>Team BE Engagements Updates: {{ all_users_be_updates }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>CX Engagement</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for CX Engagement -->
+                    <p>My CX Engagements Count: {{ cx_user_count }}</p>
+                    <p>Team CX Engagements Count: {{ cx_total_count }}</p>
+                    <p>My CX Engagements Updates: {{ cx_updates }}</p>
+                    <p>Team CX Engagements Updates: {{ all_users_cx_updates }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--[ CX and BE Engagement ] end-->
+
+    <!--[ TAC and Issues ] start-->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>TAC Cases</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for TAC Cases -->
+                    <p>My TAC Cases Count: {{ tac_user_count }}</p>
+                    <p>Team TAC Cases Count: {{ tac_total_count }}</p>
+                    <p>My TAC Cases Updates: {{ tac_updates }}</p>
+                    <p>Team TAC Cases Updates: {{ all_users_tac_updates }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Issues</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for Issues -->
+                    <p>My Issues Count: {{ issues_user_count }}</p>
+                    <p>Team Issues Count: {{ issues_total_count }}</p>
+                    <p>My Issues Updates: {{ issues_updates }}</p>
+                    <p>Team Issues Updates: {{ all_users_issues_updates }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--[ TAC and Issues ] end-->
+
+    <!--[ Meetings and other ] start-->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Customer Facing Meetings</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for Customer Facing Meetings -->
+                    <p>My Meetings Count: {{ meetings_user_count }}</p>
+                    <p>Team Meetings Count: {{ meetings_total_count }}</p>
+                    <p>My Meetings Updates: {{ meetings_updates }}</p>
+                    <p>Team Meetings Updates: {{ all_users_meetings_updates }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Activities</h5>
+                </div>
+                <div class="card-block">
+                    <!-- Your content for Activities -->
+                    <p>My Activities Count: {{ activities_user_count }}</p>
+                    <p>Team Activities Count: {{ activities_total_count }}</p>
+                    <p>My Activities Updates: {{ activities_updates }}</p>
+                    <p>Team Activities Updates: {{ all_users_activities_updates }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--[ Meetings and other ] end-->
+{% endblock content %}
