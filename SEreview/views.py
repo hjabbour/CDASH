@@ -844,7 +844,6 @@ def group_data_by_month(data):
         grouped_data[month_key].append(entry)
 
     return dict(grouped_data)
-from pymongo import MongoClient
 
 
 
@@ -1031,3 +1030,64 @@ def engineer_stats(request):
     }
 
     return render(request, 'SEreview/mystats.html', context)
+
+
+def monthly_countsum_collection(collection_name, user_id=None, value=True):
+    query = {"create_date": {"$exists": True, "$ne": None}}  # Adjust based on your actual field
+    if user_id:
+        query['user_id'] = user_id
+
+    collection = db[collection_name]
+
+    if value:
+        # Count the number of records and calculate their sum
+        result = collection.aggregate([
+            {"$match": query},
+            {"$group": {
+                "_id": {"year": {"$year": "$create_date"}, "month": {"$month": "$create_date"}},
+                "count": {"$sum": 1},
+                "sum_value": {"$sum": "$approx_value"}
+            }}
+        ])
+    else:
+        # Count only the number of records
+        result = collection.aggregate([
+            {"$match": query},
+            {"$group": {
+                "_id": {"year": {"$year": "$create_date"}, "month": {"$month": "$create_date"}},
+                "count": {"$sum": 1}
+            }}
+        ])
+
+    # Extract the count and sum_value from the result
+    result_list = list(result)
+    formatted_result = [
+        {"count": r["count"], "sum_value": r["sum_value"], "year_month": f"{datetime.strftime(r['_id']['month'], '%B %Y')}"}
+        for r in result_list
+    ]
+
+    return formatted_result
+
+
+def monthly_countupdates(collection_name, user_id=None):
+    query = {"desc_update.timestamp": {"$exists": True}}  # Adjust based on your actual field
+    if user_id:
+        query['user_id'] = user_id
+
+    collection = db[collection_name]
+    total_updates = collection.aggregate([
+        {"$match": query},
+        {"$project": {"year_month": {"$dateToString": {"format": "%Y-%m", "date": "$desc_update.timestamp"}}}},
+        {"$group": {"_id": "$year_month", "total_updates": {"$sum": 1}}}
+    ])
+
+    # Extract the total_updates from the result
+    result_list = list(total_updates)
+    formatted_result = [
+        {"total_updates": r["total_updates"], "year_month": f"{datetime.strptime(r['_id'], '%Y-%m').strftime('%B %Y')}"}
+        for r in result_list
+    ]
+
+    return formatted_result
+
+
