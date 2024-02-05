@@ -26,7 +26,7 @@ from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityF
 from .conn import get_mongodb_connection
 
 from collections import defaultdict
-
+import pandas as pd
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
@@ -1032,62 +1032,108 @@ def engineer_stats(request):
     return render(request, 'SEreview/mystats.html', context)
 
 
-def monthly_countsum_collection(collection_name, user_id=None, value=True):
-    query = {"create_date": {"$exists": True, "$ne": None}}  # Adjust based on your actual field
-    if user_id:
-        query['user_id'] = user_id
+def monthly_stats(request):
+    # Get all unique user IDs and first names
+    users = User.objects.values_list('id', 'first_name')
 
-    collection = db[collection_name]
-
-    if value:
-        # Count the number of records and calculate their sum
-        result = collection.aggregate([
-            {"$match": query},
-            {"$group": {
-                "_id": {"year": {"$year": "$create_date"}, "month": {"$month": "$create_date"}},
-                "count": {"$sum": 1},
-                "sum_value": {"$sum": "$approx_value"}
-            }}
-        ])
-    else:
-        # Count only the number of records
-        result = collection.aggregate([
-            {"$match": query},
-            {"$group": {
-                "_id": {"year": {"$year": "$create_date"}, "month": {"$month": "$create_date"}},
-                "count": {"$sum": 1}
-            }}
-        ])
-
-    # Extract the count and sum_value from the result
-    result_list = list(result)
-    formatted_result = [
-        {"count": r["count"], "sum_value": r["sum_value"], "year_month": f"{datetime.strftime(r['_id']['month'], '%B %Y')}"}
-        for r in result_list
+    # List of collections to process
+    collections = [
+        'forecasted_opportunity',
+        'funnel_opportunity',
+        'meetings',
+        'be_engagement_activity',
+        'cx_engagement_activity',
+        'issues',
+        'tac_case',
+        'activity',
     ]
 
-    return formatted_result
+    # Initialize an empty list to store the data
+    data = []
 
+    # Initialize an empty dictionary to store DataFrames for each section
+    dfs = {}
 
-def monthly_countupdates(collection_name, user_id=None):
-    query = {"desc_update.timestamp": {"$exists": True}}  # Adjust based on your actual field
-    if user_id:
-        query['user_id'] = user_id
+    for collection_name in collections:
+        for user_id, user_firstname in users:
+            # Construct the query based on whether 'approx_value' field exists in the collection
+            query = {"create_date": {"$exists": True, "$ne": None}, "user_id": user_id}
 
-    collection = db[collection_name]
-    total_updates = collection.aggregate([
-        {"$match": query},
-        {"$project": {"year_month": {"$dateToString": {"format": "%Y-%m", "date": "$desc_update.timestamp"}}}},
-        {"$group": {"_id": "$year_month", "total_updates": {"$sum": 1}}}
-    ])
+            # Check if 'approx_value' field exists in the collection
+            if db[collection_name].find_one({"approx_value": {"$exists": True}}):
+                pipeline = [
+                    {"$match": query},
+                    {"$group": {
+                        "_id": {
+                            "year": {"$year": "$create_date"},
+                            "month": {"$month": "$create_date"},
+                            "user_id": "$user_id",
+                        },
+                        "timestamp": {"$first": "$create_date"},
+                        "user_firstname": {"$first": "$user_firstname"},
+                        "count": {"$sum": 1},
+                        "sum_value": {"$sum": "$approx_value"},
+                        "user_updates": {"$sum": {"$size": "$desc_update"}}
+                    }}
+                ]
+            else:
+                pipeline = [
+                    {"$match": query},
+                    {"$group": {
+                        "_id": {
+                            "year": {"$year": "$create_date"},
+                            "month": {"$month": "$create_date"},
+                            "user_id": "$user_id",
+                        },
+                        "timestamp": {"$first": "$create_date"},
+                        "user_firstname": {"$first": "$user_firstname"},
+                        "count": {"$sum": 1},
+                        "user_updates": {"$sum": {"$size": "$desc_update"}}
+                    }}
+                ]
 
-    # Extract the total_updates from the result
-    result_list = list(total_updates)
-    formatted_result = [
-        {"total_updates": r["total_updates"], "year_month": f"{datetime.strptime(r['_id'], '%Y-%m').strftime('%B %Y')}"}
-        for r in result_list
-    ]
+            # Aggregate the data
+            result = list(db[collection_name].aggregate(pipeline))
 
-    return formatted_result
+            # Combine data into a dictionary
+            for item in result:
+                data.append({
+                    'timestamp': item['timestamp'],
+                    'user_id': user_id,
+                    'user_firstname': user_firstname,
+                    'section': collection_name,
+                    'count': item['count'],
+                    'sum_value': item.get('sum_value', 0),  # Replace None with 0
+                    'user_updates': item['user_updates'],
+                })
 
+        # Convert the list of dictionaries to a DataFrame
+        df = pd.DataFrame(data)
 
+        # Format the timestamp to only include the month and year
+        df['timestamp'] = df['timestamp'].dt.to_period('M')
+
+        # Pivot the DataFrame to create the desired matrix
+        df_pivot = df.pivot_table(index=['user_id', 'user_firstname'], columns=['section'], values=['count', 'sum_value', 'user_updates'], aggfunc='sum', fill_value=0)
+
+        # Reset index to flatten the pivot
+        df_pivot = df_pivot.reset_index()
+
+        # Add the DataFrame to the dictionary
+        dfs[collection_name] = df_pivot
+
+        # Clear the data list for the next collection
+        data = []
+
+    # Flatten the keys for each record in the context
+    flattened_context = {}
+    for section, section_data in dfs.items():
+        flattened_data = []
+        for record in section_data.to_dict(orient='records'):
+            flattened_record = {}
+            for key_tuple, value in record.items():
+                flattened_record[key_tuple[0]] = value
+            flattened_data.append(flattened_record)
+        flattened_context[section] = flattened_data
+
+    return render(request, 'SEreview/monthlymystats.html', {'context': flattened_context})
