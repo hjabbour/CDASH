@@ -5,6 +5,8 @@ from pymongo import MongoClient
 from datetime import datetime,timedelta
 from bson import ObjectId
 from dateutil.relativedelta import relativedelta
+from django.utils import timezone
+
 
 
 from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm 
@@ -21,7 +23,7 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect, get_object_or_404
 
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
 from .conn import get_mongodb_connection
 
@@ -1032,7 +1034,113 @@ def engineer_stats(request):
     return render(request, 'SEreview/mystats.html', context)
 
 
-def monthly_stats(request):
+# def monthly_stats(request):
+#     # Get all unique user IDs and first names
+#     users = User.objects.values_list('id', 'first_name')
+
+#     # List of collections to process
+#     collections = [
+#         'forecasted_opportunity',
+#         'funnel_opportunity',
+#         'meetings',
+#         'be_engagement_activity',
+#         'cx_engagement_activity',
+#         'issues',
+#         'tac_case',
+#         'activity',
+#     ]
+
+#     # Initialize an empty list to store the data
+#     data = []
+
+#     # Initialize an empty dictionary to store DataFrames for each section
+#     dfs = {}
+
+#     for collection_name in collections:
+#         for user_id, user_firstname in users:
+#             # Construct the query based on whether 'approx_value' field exists in the collection
+#             query = {"create_date": {"$exists": True, "$ne": None}, "user_id": user_id}
+
+#             # Check if 'approx_value' field exists in the collection
+#             if db[collection_name].find_one({"approx_value": {"$exists": True}}):
+#                 pipeline = [
+#                     {"$match": query},
+#                     {"$group": {
+#                         "_id": {
+#                             "year": {"$year": "$create_date"},
+#                             "month": {"$month": "$create_date"},
+#                             "user_id": "$user_id",
+#                         },
+#                         "timestamp": {"$first": "$create_date"},
+#                         "user_firstname": {"$first": "$user_firstname"},
+#                         "count": {"$sum": 1},
+#                         "sum_value": {"$sum": "$approx_value"},
+#                         "user_updates": {"$sum": {"$size": "$desc_update"}}
+#                     }}
+#                 ]
+#             else:
+#                 pipeline = [
+#                     {"$match": query},
+#                     {"$group": {
+#                         "_id": {
+#                             "year": {"$year": "$create_date"},
+#                             "month": {"$month": "$create_date"},
+#                             "user_id": "$user_id",
+#                         },
+#                         "timestamp": {"$first": "$create_date"},
+#                         "user_firstname": {"$first": "$user_firstname"},
+#                         "count": {"$sum": 1},
+#                         "user_updates": {"$sum": {"$size": "$desc_update"}}
+#                     }}
+#                 ]
+
+#             # Aggregate the data
+#             result = list(db[collection_name].aggregate(pipeline))
+
+#             # Combine data into a dictionary
+#             for item in result:
+#                 data.append({
+#                     'timestamp': item['timestamp'],
+#                     'user_id': user_id,
+#                     'user_firstname': user_firstname,
+#                     'section': collection_name,
+#                     'count': item['count'],
+#                     'sum_value': item.get('sum_value', 0),  # Replace None with 0
+#                     'user_updates': item['user_updates'],
+#                 })
+
+#         # Convert the list of dictionaries to a DataFrame
+#         df = pd.DataFrame(data)
+
+#         # Format the timestamp to only include the month and year
+#         df['timestamp'] = df['timestamp'].dt.to_period('M')
+
+#         # Pivot the DataFrame to create the desired matrix
+#         df_pivot = df.pivot_table(index=['user_id', 'user_firstname'], columns=['section'], values=['count', 'sum_value', 'user_updates'], aggfunc='sum', fill_value=0)
+
+#         # Reset index to flatten the pivot
+#         df_pivot = df_pivot.reset_index()
+
+#         # Add the DataFrame to the dictionary
+#         dfs[collection_name] = df_pivot
+
+#         # Clear the data list for the next collection
+#         data = []
+
+#     # Flatten the keys for each record in the context
+#     flattened_context = {}
+#     for section, section_data in dfs.items():
+#         flattened_data = []
+#         for record in section_data.to_dict(orient='records'):
+#             flattened_record = {}
+#             for key_tuple, value in record.items():
+#                 flattened_record[key_tuple[0]] = value
+#             flattened_data.append(flattened_record)
+#         flattened_context[section] = flattened_data
+
+#     return render(request, 'SEreview/monthlymystats.html', {'context': flattened_context})
+
+def all_stats(request):
     # Get all unique user IDs and first names
     users = User.objects.values_list('id', 'first_name')
 
@@ -1057,7 +1165,7 @@ def monthly_stats(request):
     for collection_name in collections:
         for user_id, user_firstname in users:
             # Construct the query based on whether 'approx_value' field exists in the collection
-            query = {"create_date": {"$exists": True, "$ne": None}, "user_id": user_id}
+            query = {"user_id": user_id}
 
             # Check if 'approx_value' field exists in the collection
             if db[collection_name].find_one({"approx_value": {"$exists": True}}):
@@ -1065,12 +1173,8 @@ def monthly_stats(request):
                     {"$match": query},
                     {"$group": {
                         "_id": {
-                            "year": {"$year": "$create_date"},
-                            "month": {"$month": "$create_date"},
                             "user_id": "$user_id",
                         },
-                        "timestamp": {"$first": "$create_date"},
-                        "user_firstname": {"$first": "$user_firstname"},
                         "count": {"$sum": 1},
                         "sum_value": {"$sum": "$approx_value"},
                         "user_updates": {"$sum": {"$size": "$desc_update"}}
@@ -1081,12 +1185,8 @@ def monthly_stats(request):
                     {"$match": query},
                     {"$group": {
                         "_id": {
-                            "year": {"$year": "$create_date"},
-                            "month": {"$month": "$create_date"},
                             "user_id": "$user_id",
                         },
-                        "timestamp": {"$first": "$create_date"},
-                        "user_firstname": {"$first": "$user_firstname"},
                         "count": {"$sum": 1},
                         "user_updates": {"$sum": {"$size": "$desc_update"}}
                     }}
@@ -1098,7 +1198,6 @@ def monthly_stats(request):
             # Combine data into a dictionary
             for item in result:
                 data.append({
-                    'timestamp': item['timestamp'],
                     'user_id': user_id,
                     'user_firstname': user_firstname,
                     'section': collection_name,
@@ -1110,14 +1209,22 @@ def monthly_stats(request):
         # Convert the list of dictionaries to a DataFrame
         df = pd.DataFrame(data)
 
-        # Format the timestamp to only include the month and year
-        df['timestamp'] = df['timestamp'].dt.to_period('M')
-
         # Pivot the DataFrame to create the desired matrix
         df_pivot = df.pivot_table(index=['user_id', 'user_firstname'], columns=['section'], values=['count', 'sum_value', 'user_updates'], aggfunc='sum', fill_value=0)
 
         # Reset index to flatten the pivot
         df_pivot = df_pivot.reset_index()
+
+        # Order the DataFrame by the count
+        #df_pivot = df_pivot.sort_values(by=[('count', ''), ('user_id', '')], ascending=False)
+        #df_pivot = df_pivot.sort_values(by=('user_updates',), ascending=False)
+
+
+
+
+
+
+
 
         # Add the DataFrame to the dictionary
         dfs[collection_name] = df_pivot
@@ -1136,4 +1243,96 @@ def monthly_stats(request):
             flattened_data.append(flattened_record)
         flattened_context[section] = flattened_data
 
-    return render(request, 'SEreview/monthlymystats.html', {'context': flattened_context})
+    return render(request, 'SEreview/allstats.html', {'context': flattened_context})
+
+## same as the all stats but with date range  /monthly_stats/?start_date=01-2023&end_date=02-2023 
+def monthly_stats(request):
+    form = DateRangeForm(request.POST or None)
+
+    if request.method == 'POST':
+        if form.is_valid():
+            start_date = form.cleaned_data.get('start_date')
+            end_date = form.cleaned_data.get('end_date')
+
+            start_date = datetime.combine(start_date, datetime.min.time())
+            end_date = datetime.combine(end_date, datetime.max.time())
+
+            users = User.objects.values_list('id', 'first_name')
+            collections = [
+                'forecasted_opportunity',
+                'funnel_opportunity',
+                'meetings',
+                'be_engagement_activity',
+                'cx_engagement_activity',
+                'issues',
+                'tac_case',
+                'activity',
+            ]
+
+            data = []
+            dfs = {}
+
+            for collection_name in collections:
+                for user_id, user_firstname in users:
+                    query = {"user_id": user_id}
+                    query["create_date"] = {"$gte": start_date, "$lt": end_date}
+                    query["desc_update.timestamp"] = {"$gte": start_date, "$lt": end_date}
+
+                    if db[collection_name].find_one({"approx_value": {"$exists": True}}):
+                        pipeline = [
+                            {"$match": query},
+                            {"$group": {
+                                "_id": {
+                                    "user_id": "$user_id",
+                                },
+                                "count": {"$sum": 1},
+                                "sum_value": {"$sum": "$approx_value"},
+                                "user_updates": {"$sum": {"$size": "$desc_update"}}
+                            }}
+                        ]
+                    else:
+                        pipeline = [
+                            {"$match": query},
+                            {"$group": {
+                                "_id": {
+                                    "user_id": "$user_id",
+                                },
+                                "count": {"$sum": 1},
+                                "user_updates": {"$sum": {"$size": "$desc_update"}}
+                            }}
+                        ]
+
+                    result = list(db[collection_name].aggregate(pipeline))
+
+                    for item in result:
+                        data.append({
+                            'user_id': user_id,
+                            'user_firstname': user_firstname,
+                            'section': collection_name,
+                            'count': item['count'],
+                            'sum_value': item.get('sum_value', 0),
+                            'user_updates': item['user_updates'],
+                        })
+
+                df = pd.DataFrame(data)
+
+                if not df.empty:
+                    df_pivot = df.pivot_table(index=['user_id', 'user_firstname'], columns=['section'], values=['count', 'sum_value', 'user_updates'], aggfunc='sum', fill_value=0)
+                    df_pivot = df_pivot.reset_index()
+                    dfs[collection_name] = df_pivot
+
+                data = []
+
+            flattened_context = {}
+            for section, section_data in dfs.items():
+                flattened_data = []
+                for record in section_data.to_dict(orient='records'):
+                    flattened_record = {}
+                    for key_tuple, value in record.items():
+                        flattened_record[key_tuple[0]] = value
+                    flattened_data.append(flattened_record)
+                flattened_context[section] = flattened_data
+
+            return render(request, 'SEreview/monthly_stats.html', {'context': flattened_context, 'form': form})
+
+    return render(request, 'SEreview/monthly_stats.html', {'form': form})

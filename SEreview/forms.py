@@ -187,3 +187,7 @@ class UClientForm(forms.Form):
             # Capitalize the client name
             client_name = client_name.capitalize()
         return client_name
+    
+class DateRangeForm(forms.Form):
+    start_date = forms.DateField(label='Start Date', widget=forms.SelectDateWidget(years=range(2023, 2030)))
+    end_date = forms.DateField(label='End Date', widget=forms.SelectDateWidget(years=range(2023, 2030)))

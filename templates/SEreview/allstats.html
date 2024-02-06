@@ -1,0 +1,35 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+
+  <h1>Overall Statistics</h1>
+
+  {% for section, section_data in context.items %}
+  <h2>{{ section }}</h2>
+  <table border="1">
+    <thead>
+      <tr>
+        
+        <th>User First Name</th>
+        <th>Count</th>
+        <th>Sum Value</th>
+        <th>User Updates</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in section_data %}
+        <tr>
+          <td>{{ record.user_firstname }}</td>
+          <td>{{ record.count }}</td>
+          <td>{{ record.sum_value }}</td>
+          <td>{{ record.user_updates }}</td>
+
+
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endfor %}
+{% endblock %}

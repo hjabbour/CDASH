@@ -1,0 +1,122 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+ <!--[  Opportuntities  and funnel engages tac ] start-->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Forecasted Opportunities</h5>
+            </div>
+            <div class="card-block">
+                <ul class="nav nav-tabs" id="opportunityTabs" role="tablist">
+                    {% for month, opportunities in forecasted_opportunities.items %}
+                        <li class="nav-item">
+                            <a class="nav-link" id="{{ month|slugify }}-tab" data-toggle="tab" href="#{{ month|slugify }}" role="tab" aria-controls="{{ month|slugify }}" aria-selected="false">{{ month }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
+                <div class="tab-content" id="opportunityTabsContent">
+                    {% for month, opportunities in forecasted_opportunities.items %}
+                        <div class="tab-pane fade" id="{{ month|slugify }}" role="tabpanel" aria-labelledby="{{ month|slugify }}-tab">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Client/Opportunity</th>
+                                            <th>Pending</th>
+                                            <th>Description Update</th>
+                                            <th>Approx Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for opportunity in opportunities %}
+                                            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in opportunity.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                                                <td>{{ opportunity.client_name }}<p>{{ opportunity.opportunity_name }}</p></td>
+                                                <td>{{ opportunity.pending }}</td>
+                                                <td>
+                                                    {% for update in opportunity.desc_update %}
+                                                        {% if forloop.last %}
+                                                            <p class="text-muted">{{ update.timestamp|date:"M d, Y" }}</p>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                </td>
+                                                <td>{{ opportunity.approx_value }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Funnel Creation</h5>
+            </div>
+          
+            <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Stats</title>
+</head>
+<body>
+    <h1>Monthly Stats</h1>
+
+    <!-- Date Range Form -->
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Submit</button>
+    </form>
+
+    <hr>
+
+    <!-- Display Data -->
+    {% if context %}
+        {% for section, data in context.items %}
+            <h2>{{ section }}</h2>
+            <table border="1">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>User Firstname</th>
+                        <th>Count</th>
+                        <th>Sum Value</th>
+                        <th>User Updates</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in data %}
+                        <tr>
+                            <td>{{ item.user_id }}</td>
+                            <td>{{ item.user_firstname }}</td>
+                            <td>{{ item.count }}</td>
+                            <td>{{ item.sum_value }}</td>
+                            <td>{{ item.user_updates }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <br>
+        {% endfor %}
+    {% else %}
+        <p>No data available.</p>
+    {% endif %}
+</body>
+</html>
+
+               
+        </div>
+    </div>
+ <!--[  Opportuntities  and funnel engages tac ] end-->
+
+{% endblock content %}
