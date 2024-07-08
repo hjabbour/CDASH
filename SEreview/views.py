@@ -345,72 +345,30 @@ def collection_list(request, collection_name):
     return render(request, 'SEreview/collection_list.html', context)
 
 ## use the toupdatelist to get what is needed 
-def collection_user(user_id, collection_name,superuser=False):
+# def collection_user(user_id, collection_name,superuser=False):
     
-    #statuslist = ['Planned','Active','Delayed']
+#     #statuslist = ['Planned','Active','Delayed']
+#     collection = db[collection_name]
+#     if is_user_superuser(user_id):
+#         data = collection.find({'status': {'$in': toupdatelist}})
+#     else:
+#         data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
+#     return data
+
+def collection_user(user_id, collection_name, client_name=None, superuser=False):
     collection = db[collection_name]
-    if is_user_superuser(user_id):
-        data = collection.find({'status': {'$in': toupdatelist}})
-    else:
-        data = collection.find({'user_id': user_id,'status': {'$in': toupdatelist}})
+    query = {'status': {'$in': toupdatelist}}
+    
+    if not is_user_superuser(user_id):
+        query['user_id'] = user_id
+
+    if client_name:
+        query['client_name'] = client_name
+
+    data = collection.find(query)
     return data
 
-def update_itemold(request, collection_name, item_id):
-    user_id = request.user.id  # Retrieve the logged-in user ID
-    collection = db[collection_name]
-    item = collection.find_one({'_id': ObjectId(item_id)})
 
-    # Determine the update form class based on the collection name
-    if collection_name == 'forecasted_opportunity':
-        UpdateForm = UForecastedOpportunityForm
-    elif collection_name == 'funnel_opportunity':
-        UpdateForm = UFunnelOpportunityForm
-    elif collection_name == 'activity':
-        UpdateForm = UActivityForm
-    elif collection_name == 'meetings':
-        UpdateForm = UWeeklyMeetingForm
-    elif collection_name == 'be_engagement_activity':
-        UpdateForm = UBEEngagementActivityForm
-    elif collection_name == 'cx_engagement_activity':
-        UpdateForm = UCXEngagementActivityForm
-    elif collection_name == 'tac_case':
-        UpdateForm = UTACCaseForm
-    elif collection_name == 'issues':
-        UpdateForm = UIssuesForm
-    elif collection_name == 'clients':
-        UpdateForm = UClientForm
-    else:
-        # Handle the case when the collection name is not recognized
-        return HttpResponse('Invalid collection name')
-
-    if request.method == 'POST':
-        form = UpdateForm(request.POST)
-        approx_value = None 
-        if form.is_valid():
-            pending = form.cleaned_data['pending']
-            status = form.cleaned_data['status']
-            if 'approx_value' in form.cleaned_data:
-                approx_value = form.cleaned_data['approx_value']
-            desc_update_text = form.cleaned_data['desc_update']
-            
-            # Update pending, status, and desc_update fields
-            if(approx_value):
-                collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'pending': pending, 'status': status,'approx_value':approx_value}})
-            else:
-                collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'pending': pending, 'status': status}})
-            
-            # Add to desc_update array
-            update = {
-                'text': desc_update_text,
-                'timestamp': datetime.now()
-            }
-            collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update}})
-            
-            return redirect('SEreview:collection_list', collection_name=collection_name)
-    else:
-        form = UpdateForm()
-
-    return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
 
 
 def delete_item(request, collection_name, item_id):
@@ -1034,111 +992,6 @@ def engineer_stats(request):
     return render(request, 'SEreview/mystats.html', context)
 
 
-# def monthly_stats(request):
-#     # Get all unique user IDs and first names
-#     users = User.objects.values_list('id', 'first_name')
-
-#     # List of collections to process
-#     collections = [
-#         'forecasted_opportunity',
-#         'funnel_opportunity',
-#         'meetings',
-#         'be_engagement_activity',
-#         'cx_engagement_activity',
-#         'issues',
-#         'tac_case',
-#         'activity',
-#     ]
-
-#     # Initialize an empty list to store the data
-#     data = []
-
-#     # Initialize an empty dictionary to store DataFrames for each section
-#     dfs = {}
-
-#     for collection_name in collections:
-#         for user_id, user_firstname in users:
-#             # Construct the query based on whether 'approx_value' field exists in the collection
-#             query = {"create_date": {"$exists": True, "$ne": None}, "user_id": user_id}
-
-#             # Check if 'approx_value' field exists in the collection
-#             if db[collection_name].find_one({"approx_value": {"$exists": True}}):
-#                 pipeline = [
-#                     {"$match": query},
-#                     {"$group": {
-#                         "_id": {
-#                             "year": {"$year": "$create_date"},
-#                             "month": {"$month": "$create_date"},
-#                             "user_id": "$user_id",
-#                         },
-#                         "timestamp": {"$first": "$create_date"},
-#                         "user_firstname": {"$first": "$user_firstname"},
-#                         "count": {"$sum": 1},
-#                         "sum_value": {"$sum": "$approx_value"},
-#                         "user_updates": {"$sum": {"$size": "$desc_update"}}
-#                     }}
-#                 ]
-#             else:
-#                 pipeline = [
-#                     {"$match": query},
-#                     {"$group": {
-#                         "_id": {
-#                             "year": {"$year": "$create_date"},
-#                             "month": {"$month": "$create_date"},
-#                             "user_id": "$user_id",
-#                         },
-#                         "timestamp": {"$first": "$create_date"},
-#                         "user_firstname": {"$first": "$user_firstname"},
-#                         "count": {"$sum": 1},
-#                         "user_updates": {"$sum": {"$size": "$desc_update"}}
-#                     }}
-#                 ]
-
-#             # Aggregate the data
-#             result = list(db[collection_name].aggregate(pipeline))
-
-#             # Combine data into a dictionary
-#             for item in result:
-#                 data.append({
-#                     'timestamp': item['timestamp'],
-#                     'user_id': user_id,
-#                     'user_firstname': user_firstname,
-#                     'section': collection_name,
-#                     'count': item['count'],
-#                     'sum_value': item.get('sum_value', 0),  # Replace None with 0
-#                     'user_updates': item['user_updates'],
-#                 })
-
-#         # Convert the list of dictionaries to a DataFrame
-#         df = pd.DataFrame(data)
-
-#         # Format the timestamp to only include the month and year
-#         df['timestamp'] = df['timestamp'].dt.to_period('M')
-
-#         # Pivot the DataFrame to create the desired matrix
-#         df_pivot = df.pivot_table(index=['user_id', 'user_firstname'], columns=['section'], values=['count', 'sum_value', 'user_updates'], aggfunc='sum', fill_value=0)
-
-#         # Reset index to flatten the pivot
-#         df_pivot = df_pivot.reset_index()
-
-#         # Add the DataFrame to the dictionary
-#         dfs[collection_name] = df_pivot
-
-#         # Clear the data list for the next collection
-#         data = []
-
-#     # Flatten the keys for each record in the context
-#     flattened_context = {}
-#     for section, section_data in dfs.items():
-#         flattened_data = []
-#         for record in section_data.to_dict(orient='records'):
-#             flattened_record = {}
-#             for key_tuple, value in record.items():
-#                 flattened_record[key_tuple[0]] = value
-#             flattened_data.append(flattened_record)
-#         flattened_context[section] = flattened_data
-
-#     return render(request, 'SEreview/monthlymystats.html', {'context': flattened_context})
 
 def all_stats(request):
     # Get all unique user IDs and first names
@@ -1336,3 +1189,54 @@ def monthly_stats(request):
             return render(request, 'SEreview/monthly_stats.html', {'context': flattened_context, 'form': form})
 
     return render(request, 'SEreview/monthly_stats.html', {'form': form})
+
+
+
+@login_required
+def client_centric(request):
+    user_id = request.user.id
+    clients = get_existing_clients(user_id)
+    return render(request, 'SEreview/client_centric.html', {'clients': clients})
+
+@login_required
+def client_dashboard(request, client_name):
+    # Define form classes for each form type
+    form_classes = {
+        'meetings': WeeklyMeetingForm,
+        'forecasted_opportunity': ForecastedOpportunityForm,
+        'funnel_opportunity': FunnelOpportunityForm,
+        'activity': ActivityForm,
+        'be_engagement_activity': BEEngagementActivityForm,
+        'cx_engagement_activity': CXEngagementActivityForm,
+        'tac_case': TACCaseForm,
+        'issues': IssuesForm,
+        'clients': ClientForm,
+        # Add more form classes as needed
+    }
+
+    # List of forms to render on the client dashboard
+    forms_to_render = []
+
+    user_id = request.user.id
+    existing_clients = get_existing_clients(user_id)  # Retrieve existing clients
+
+    for form_name, FormClass in form_classes.items():
+        data = collection_user(user_id, form_name, client_name=client_name)  # Retrieve existing data for the form
+        form = FormClass()  # Instantiate the form
+        fields = fields_to_display.get(form_name, [])  # Fields to display in the table
+
+        # Prepare data and form for rendering
+        forms_to_render.append({
+            'form_name': form_name,
+            'title': form_name.capitalize().replace('_', ' '),  # Example: "forecasted_opportunity" becomes "Forecasted Opportunity"
+            'data': data,
+            'form': form,
+            'fields_to_display': fields,
+            'existing_clients': existing_clients,
+        })
+
+    # Render the client_dashboard.html template with forms_to_render
+    return render(request, 'SEreview/client_dashboard.html', {
+        'client_name': client_name,
+        'forms_to_render': forms_to_render,
+    })
