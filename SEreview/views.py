@@ -13,7 +13,8 @@ from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeFor
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User 
-from django.http import HttpResponse
+from django.http import HttpResponse ,HttpResponseNotFound
+
 
 from django.views.generic import CreateView
 from django.contrib.auth import logout
@@ -21,7 +22,7 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth.decorators import login_required
 
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404 
 
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
@@ -52,14 +53,33 @@ client = get_mongodb_connection()
 db = client['CDASH']
 
 
+# def get_existing_clients(user_id):
+#     # Access your MongoDB collection
+#     collection = db['clients']
+#     # Fetch the client names based on user_id
+#     existing_clients = collection.find({'user_id': user_id})
+#     client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
+#     #client.close()  # Close the MongoDB connection
+#     return client_list
+
 def get_existing_clients(user_id):
-    # Access your MongoDB collection
     collection = db['clients']
-    # Fetch the client names based on user_id
-    existing_clients = collection.find({'user_id': user_id})
+    if is_user_superuser(user_id):
+        existing_clients = collection.find()
+    else:
+        existing_clients = collection.find({'user_id': user_id})
     client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
-    #client.close()  # Close the MongoDB connection
     return client_list
+
+## this function is to retreive all clients with their id as opposed to just a list of names
+def get_all_clients(user_id):
+    collection = db['clients']
+    if is_user_superuser(user_id):
+        existing_clients = collection.find()
+    else:
+        existing_clients = collection.find({'user_id': user_id})
+
+    return existing_clients
 
 @login_required
 def render_dynamic_form(request, form_name):
@@ -369,6 +389,15 @@ def collection_user(user_id, collection_name, client_name=None, superuser=False)
     return data
 
 
+def collection_client(collection_name, client_name=None, superuser=False):
+    collection = db[collection_name]
+    query = {'status': {'$in': toupdatelist}}
+    
+    if client_name:
+        query['client_name'] = client_name
+
+    data = collection.find(query)
+    return data
 
 
 def delete_item(request, collection_name, item_id):
@@ -1195,15 +1224,25 @@ def monthly_stats(request):
 @login_required
 def client_centric(request):
     user_id = request.user.id
-    clients = get_existing_clients(user_id)
+    clients = get_all_clients(user_id)  # Replace with your logic to retrieve clients
+    print(clients)  # Add this line for debugging
+
     return render(request, 'SEreview/client_centric.html', {'clients': clients})
 
+
 @login_required
-def client_dashboard(request, client_name):
-    # Define form classes for each form type
+def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
+    collection = db['clients']  # Replace with your actual MongoDB collection
+    client = collection.find_one({'_id': ObjectId(client_id)})
+    print(client)
+    
+    if not client:
+        return HttpResponseNotFound("Client not found")
+
+    # Dictionary mapping form names to their corresponding form classes
     form_classes = {
-        'meetings': WeeklyMeetingForm,
         'forecasted_opportunity': ForecastedOpportunityForm,
+        'meetings': WeeklyMeetingForm,
         'funnel_opportunity': FunnelOpportunityForm,
         'activity': ActivityForm,
         'be_engagement_activity': BEEngagementActivityForm,
@@ -1211,32 +1250,231 @@ def client_dashboard(request, client_name):
         'tac_case': TACCaseForm,
         'issues': IssuesForm,
         'clients': ClientForm,
-        # Add more form classes as needed
     }
 
-    # List of forms to render on the client dashboard
-    forms_to_render = []
+    # Validate if form_name is in the form_classes dictionary
+    if form_name not in form_classes:
+        return HttpResponseNotFound("Form not found")
 
+    form_class = form_classes[form_name]
     user_id = request.user.id
-    existing_clients = get_existing_clients(user_id)  # Retrieve existing clients
+    data = collection_client(form_name, client['client_name'])  # Fetch data for the specified form and client
+    fields_to_display = []  # Define this based on your logic
+    data = list(data)
+    print(data)
 
-    for form_name, FormClass in form_classes.items():
-        data = collection_user(user_id, form_name, client_name=client_name)  # Retrieve existing data for the form
-        form = FormClass()  # Instantiate the form
-        fields = fields_to_display.get(form_name, [])  # Fields to display in the table
+    # Initialize form with client's name selected
+    initial_form_data = {'client_name': client['client_name']}
+    form = form_class(initial=initial_form_data)
 
-        # Prepare data and form for rendering
-        forms_to_render.append({
-            'form_name': form_name,
-            'title': form_name.capitalize().replace('_', ' '),  # Example: "forecasted_opportunity" becomes "Forecasted Opportunity"
-            'data': data,
-            'form': form,
-            'fields_to_display': fields,
-            'existing_clients': existing_clients,
-        })
-
-    # Render the client_dashboard.html template with forms_to_render
     return render(request, 'SEreview/client_dashboard.html', {
-        'client_name': client_name,
-        'forms_to_render': forms_to_render,
+        'client_name': client['client_name'],
+        'form': form,
+        'form_name': form_name,
+        'data': data,
+        'fields_to_display': fields_to_display,
     })
+    
+@login_required    
+def process_dash(request, form_name):
+    if request.method == 'POST':
+        user_id = request.user.id  # Retrieve the logged-in user ID
+
+        client_name = request.POST.get('client_name')  # Retrieve client_name from POST data if available
+        client_id = get_client_id_by_name(client_name)
+        
+        if form_name == 'forecasted_opportunity':
+            form = ForecastedOpportunityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'opportunity_name': form.cleaned_data['opportunity_name'],
+                    'client_name': form.cleaned_data['client_name'],
+                    'technology': form.cleaned_data['technology'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'create_date': datetime.now(),
+                    'approx_value': form.cleaned_data['approx_value'],
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+        
+        elif form_name == 'funnel_opportunity':
+            form = FunnelOpportunityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'opportunity_name': form.cleaned_data['opportunity_name'],
+                    'client_name': form.cleaned_data['client_name'],
+                    'technology': form.cleaned_data['technology'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'approx_value': form.cleaned_data['approx_value'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'activity':
+            form = ActivityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'activity_name': form.cleaned_data['activity_name'],
+                    'client_name': form.cleaned_data['client_name'],
+                    'technology': form.cleaned_data['technology'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'be_engagement_activity':
+            form = BEEngagementActivityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'opportunity_name': form.cleaned_data['opportunity_name'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'be_name': form.cleaned_data['be_name'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'cx_engagement_activity':
+            form = CXEngagementActivityForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'cx_name': form.cleaned_data['cx_name'],
+                    'pending': form.cleaned_data['pending'],
+                    'status': form.cleaned_data['status'],
+                    'be_name': form.cleaned_data['be_name'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'tac_case':
+            form = TACCaseForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'case_name': form.cleaned_data['case_name'],
+                    'status': form.cleaned_data['status'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'issues':
+            form = IssuesForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'issue_title': form.cleaned_data['issue_title'],
+                    'status': form.cleaned_data['status'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'meetings':
+            form = WeeklyMeetingForm(request.POST)
+            if form.is_valid():
+                meeting_date = datetime(
+                    year=form.cleaned_data['meeting_date'].year,
+                    month=form.cleaned_data['meeting_date'].month,
+                    day=form.cleaned_data['meeting_date'].day,
+                )
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'status': 'Active',
+                    'meeting_date': meeting_date,
+                    'meeting_outcome': form.cleaned_data['meeting_outcome'],
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'timestamp': datetime.now()
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'clients':
+            form = ClientForm(request.POST)
+            if form.is_valid():
+                client_name = form.cleaned_data['client_name'].capitalize()
+                if not check_client_exists(client_name, user_id):
+                    data = {
+                        'user_id': user_id,
+                        'status': 'Active',
+                        'client_name': form.cleaned_data['client_name'],
+                    }
+                    process_form_data(form_name, data)
+                    client_id = get_client_id_by_name(client_name)
+                    return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+                else:
+                    error_message = "Client already exists."
+                    return redirect('SEreview:error_page_with_message', message=error_message)
+
+    else:
+        return redirect('SEreview:error_page')
+
+def get_client_id_by_name(client_name):
+    collection = db['clients']
+    result = collection.find_one({'client_name': client_name})
+    if result:
+        return str(result['_id'])
+    return None

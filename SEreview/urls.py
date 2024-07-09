@@ -16,6 +16,7 @@ urlpatterns = [
     path('issues/', views.render_dynamic_form, {'form_name': 'issues'}, name='issues'),
     path('meetings/', views.render_dynamic_form, {'form_name': 'meetings'}, name='meetings'),
     path('process-form/<str:form_name>/', views.process_form_view, name='process_form'),
+    path('process-dash/<str:form_name>/', views.process_dash, name='process_dash'),
     path('collections/<str:collection_name>/', views.collection_list, name='collection_list'),
     path('update/<str:collection_name>/<str:item_id>/', views.update_item, name='update_item'),
     path('delete_item/<str:collection_name>/<str:item_id>/', views.delete_item, name='delete_item'),
@@ -31,5 +32,8 @@ urlpatterns = [
     path('select_engineer/', views.select_engineer, name='select_engineer'),
     path('detail_item/<str:collection_name>/<str:item_id>/', views.detail_item, name='detail_item'),
     path('client-centric/', views.client_centric, name='client_centric'),
-    path('client-dashboard/<str:client_name>/', views.client_dashboard, name='client_dashboard'),
+    path('client_dashboard/<str:client_id>/', views.client_dashboard, name='client_dashboard'),
+    path('client_dashboard/<str:client_id>/<str:form_name>/', views.client_dashboard, name='client_dashboard_with_form'),
+
+
 ]
