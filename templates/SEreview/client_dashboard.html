@@ -2,7 +2,17 @@
 {% load static %}
 
 {% block content %}
-    <!--[ Active Opportunities funnel engages tac ] start-->
+<div class="button-container mb-3">
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='forecasted_opportunity' %}" class="btn btn-primary me-2 mb-2">Forecasted Opportunity</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='meetings' %}" class="btn btn-primary me-2 mb-2">Meetings</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='funnel_opportunity' %}" class="btn btn-primary me-2 mb-2">Funnel Opportunity</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='activity' %}" class="btn btn-primary me-2 mb-2">Activity</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='be_engagement_activity' %}" class="btn btn-primary me-2 mb-2">BE Engagement Activity</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='cx_engagement_activity' %}" class="btn btn-primary me-2 mb-2">CX Engagement Activity</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='tac_case' %}" class="btn btn-primary me-2 mb-2">TAC Case</a>
+    <a href="{% url 'SEreview:client_dashboard_with_form' client_id=client_id form_name='issues' %}" class="btn btn-primary me-2 mb-2">Issues</a>
+</div>
+    <!--[top level recent entriers  funnel engages tac ] start-->
     <div class="col-xl-10 col-md-6">
       <div class="card Recent-Users">
         <div class="card-header">

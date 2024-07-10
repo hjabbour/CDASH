@@ -1234,8 +1234,13 @@ def client_centric(request):
 def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     collection = db['clients']  # Replace with your actual MongoDB collection
     client = collection.find_one({'_id': ObjectId(client_id)})
-    print(client)
+    #print(client)
     
+    context = {
+        'client_id': client_id,
+        'form_name': form_name,
+        # Include other context variables as needed
+    }
     if not client:
         return HttpResponseNotFound("Client not found")
 
@@ -1261,7 +1266,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     data = collection_client(form_name, client['client_name'])  # Fetch data for the specified form and client
     fields_to_display = []  # Define this based on your logic
     data = list(data)
-    print(data)
+    #print(data)
 
     # Initialize form with client's name selected
     initial_form_data = {'client_name': client['client_name']}
@@ -1269,6 +1274,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
 
     return render(request, 'SEreview/client_dashboard.html', {
         'client_name': client['client_name'],
+        'client_id': client_id,
         'form': form,
         'form_name': form_name,
         'data': data,
