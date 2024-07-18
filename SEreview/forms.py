@@ -191,3 +191,35 @@ class UClientForm(forms.Form):
 class DateRangeForm(forms.Form):
     start_date = forms.DateField(label='Start Date', widget=forms.SelectDateWidget(years=range(2023, 2030)))
     end_date = forms.DateField(label='End Date', widget=forms.SelectDateWidget(years=range(2023, 2030)))
+    
+## 13 07 2024    
+class SwotForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
+    strength = forms.CharField(label="Strengths", widget=forms.Textarea)
+    weakness = forms.CharField(label="Weaknesses", widget=forms.Textarea)
+    opportunity = forms.CharField(label="Opportunities", widget=forms.Textarea)
+    threat = forms.CharField(label="Threats", widget=forms.Textarea)
+
+## this maybe unused
+class USwotForm(forms.Form):
+    strength = forms.CharField(label="Strengths", widget=forms.Textarea)
+    weakness = forms.CharField(label="Weaknesses", widget=forms.Textarea)
+    opportunity = forms.CharField(label="Opportunities", widget=forms.Textarea)
+    threat = forms.CharField(label="Threats", widget=forms.Textarea)
+    class Meta:
+        fields = ['strength', 'weakness', 'opportunity', 'threat']
+        
+class ClientStrategyForm(forms.Form):
+    client_name = forms.CharField(label="Client Name", max_length=100)
+    security_strategy = forms.CharField(label="Security Strategy", widget=forms.Textarea)
+    ai_strategy = forms.CharField(label="AI Strategy", widget=forms.Textarea)
+    cloud_strategy = forms.CharField(label="Cloud Strategy", widget=forms.Textarea)
+    observability_strategy = forms.CharField(label="Observability Strategy", widget=forms.Textarea)
+
+class UClientStrategyForm(forms.Form):
+    security_strategy = forms.CharField(label="Security Strategy", widget=forms.Textarea)
+    ai_strategy = forms.CharField(label="AI Strategy", widget=forms.Textarea)
+    cloud_strategy = forms.CharField(label="Cloud Strategy", widget=forms.Textarea)
+    observability_strategy = forms.CharField(label="Observability Strategy", widget=forms.Textarea)
+    class Meta:
+        fields = ['security_strategy', 'ai_strategy', 'cloud_strategy', 'observability_strategy']

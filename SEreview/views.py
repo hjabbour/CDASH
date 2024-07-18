@@ -24,8 +24,8 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import render, redirect, get_object_or_404 
 
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm
 from .conn import get_mongodb_connection
 
 from collections import defaultdict
@@ -44,8 +44,9 @@ fields_to_display = {
         'tac_case' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'issues' : ['Issue title', 'Creation Date','Update', 'Pending','Action'],
         'clients' : ['Client'],
+        'swot': ['Strength', 'Weakness', 'Opportunity', 'Threat'],
+        'client_strategy': ['Security Strategy', 'AI Strategy', 'Cloud Strategy', 'Observability Strategy']
         
-         
         # Add more collections and their corresponding fields here
     }
 
@@ -122,6 +123,8 @@ def process_form_data(form_name, data):
         'issues': 'issues',
         'meetings': 'meetings',
         'clients': 'clients',
+        'swot':'swot',
+        'client_strategy':'client_strategy',
     }
 
     # Get the collection name based on the form name
@@ -1255,6 +1258,8 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
         'tac_case': TACCaseForm,
         'issues': IssuesForm,
         'clients': ClientForm,
+        'swot': SwotForm,
+        'client_strategy': ClientStrategyForm,
     }
 
     # Validate if form_name is in the form_classes dictionary
@@ -1474,6 +1479,37 @@ def process_dash(request, form_name):
                 else:
                     error_message = "Client already exists."
                     return redirect('SEreview:error_page_with_message', message=error_message)
+                
+        elif form_name == 'swot':
+            form = SwotForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'strength': form.cleaned_data['strength'],
+                    'weakness': form.cleaned_data['weakness'],
+                    'opportunity': form.cleaned_data['opportunity'],
+                    'threat': form.cleaned_data['threat'],
+                    'create_date': datetime.now()
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'client_strategy':
+            form = ClientStrategyForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'security_strategy': form.cleaned_data['security_strategy'],
+                    'ai_strategy': form.cleaned_data['ai_strategy'],
+                    'cloud_strategy': form.cleaned_data['cloud_strategy'],
+                    'observability_strategy': form.cleaned_data['observability_strategy'],
+                    'create_date': datetime.now()
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+    
 
     else:
         return redirect('SEreview:error_page')
