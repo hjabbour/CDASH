@@ -21,6 +21,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth.decorators import login_required
+from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404 
 
@@ -52,6 +53,46 @@ fields_to_display = {
 
 client = get_mongodb_connection()
 db = client['CDASH']
+
+
+## function to wrap logins
+def group_required(allowed_groups=None):
+    """
+    Decorator to check user group membership and access control.
+
+    Args:
+        allowed_groups (list, optional): A list of allowed group names for this view (e.g., ['SE', 'BE']).
+            If None, only superusers can access the view. Defaults to None.
+
+    Returns:
+        function: A decorator function.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        @login_required
+        def wrapper(request, *args, **kwargs):
+            user = request.user
+
+            if user.is_superuser:  # Superusers have full access
+                return func(request, *args, **kwargs)
+
+            # Check for allowed groups if provided (otherwise only superuser is allowed)
+            if allowed_groups is not None:
+                if user.groups.filter(name__in=allowed_groups).exists():
+                    return func(request, *args, **kwargs)
+                else:
+                    # Handle unauthorized access for non-superusers in non-allowed groups
+                    #return render(request, 'unauthorized.html')  # Or redirect/display error
+                    error_message = "Unauthorized Access"
+                    return redirect('SEreview:error_page_with_message', message=error_message)
+
+            # If no allowed_groups are specified, only superuser can access
+            error_message = "Unauthorized Access"
+            return redirect('SEreview:error_page_with_message', message=error_message)
+
+        return wrapper
+    return decorator  # Correct return of the decorator function
 
 
 # def get_existing_clients(user_id):
@@ -1225,6 +1266,7 @@ def monthly_stats(request):
 
 
 @login_required
+@group_required(allowed_groups=['SE'])
 def client_centric(request):
     user_id = request.user.id
     clients = get_all_clients(user_id)  # Replace with your logic to retrieve clients
@@ -1234,6 +1276,7 @@ def client_centric(request):
 
 
 @login_required
+@group_required(allowed_groups=['SE'])
 def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     collection = db['clients']  # Replace with your actual MongoDB collection
     client = collection.find_one({'_id': ObjectId(client_id)})
