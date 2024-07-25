@@ -25,7 +25,7 @@ from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404 
 
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm,BEStatusForm,BEInitiativeForm,BEActivityForm
 from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm
 from .conn import get_mongodb_connection
 
@@ -166,6 +166,10 @@ def process_form_data(form_name, data):
         'clients': 'clients',
         'swot':'swot',
         'client_strategy':'client_strategy',
+        'bestatus': 'bestatus',
+        'beinitiative': 'beinitiative',
+        'beactivity': 'beactivity'
+        
     }
 
     # Get the collection name based on the form name
@@ -1563,3 +1567,108 @@ def get_client_id_by_name(client_name):
     if result:
         return str(result['_id'])
     return None
+
+# Function to get the client name by client_id
+def get_client_name_by_id(client_id):
+    try:
+        collection = db['clients']
+        result = collection.find_one({'_id': ObjectId(client_id)})
+        if result:
+            print (result['client_name'])
+            return str(result['client_name'])
+    except Exception as e:
+        print(f"Error retrieving client name: {e}")
+    return None
+
+@group_required(allowed_groups=['SE'])
+def client_centric_be(request):
+    user_id = request.user.id
+    clients = get_all_clients(user_id)  # Replace with your logic to retrieve clients
+    print(clients)  # Add this line for debugging
+
+    return render(request, 'SEreview/client_centric_be.html', {'clients': clients})
+
+@group_required(allowed_groups=['SE'])
+def client_dashboard_be(request, client_id, form_name='bestatus', be_name='Sec'):
+    # Define your form classes in a dictionary for easy lookup
+    form_classes = {
+        'bestatus': BEStatusForm,
+        'beinitiative': BEInitiativeForm,
+        'beactivity': BEActivityForm,
+    }
+    
+    if request.method == 'GET':
+        form_class = form_classes.get(form_name)
+        if not form_class:
+            return redirect('SEreview:error_page')  # Redirect if the form_name is not valid
+        
+        user_id = request.user.id
+        # Fetch client name based on client_id
+        client_name = get_client_name_by_id(client_id)
+        #print("inside the function"+ client_name)
+    
+        # Fetch data for the specified form and client
+        data = collection_client(form_name, client_name)  # Fetch data using client_name directly
+        fields_to_display = []  # Define this based on your logic
+        data = list(data)
+        
+        # Initialize form with client's name and default be_name
+        initial_form_data = {
+            'client_name': client_name,
+            'be_name': be_name
+        }
+        form = form_class(initial=initial_form_data)
+        
+        # Make 'client_name' and 'be_name' read-only
+        #form.fields['client_name'].widget = TextInput(attrs={'readonly': 'readonly'})
+        #form.fields['be_name'].widget = TextInput(attrs={'readonly': 'readonly'})
+        
+        context = {
+            'form': form,
+            'form_name': form_name,
+            'client_name': client_name,
+            'client_id': client_id,
+            'be_name': be_name,
+            'fields_to_display': fields_to_display,
+            'data': data
+        }
+        return render(request, 'SEreview/client_dashboard_be.html', context)
+    
+    return redirect('SEreview:error_page')
+
+def process_dash_be(request, form_name):
+    # Define your form classes in a dictionary for easy lookup
+    form_classes = {
+        'bestatus': BEStatusForm,
+        'beinitiative': BEInitiativeForm,
+        'beactivity': BEActivityForm,
+    }
+
+    if request.method == 'POST':
+        user_id = request.user.id  # Retrieve the logged-in user ID
+        client_name = request.POST.get('client_name')  # Retrieve client_name from POST data
+        client_id = get_client_id_by_name(client_name)
+
+        form_class = form_classes.get(form_name)
+        if form_class:
+            form = form_class(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'be_name': form.cleaned_data.get('be_name', ''),  # Default to empty string if not provided
+                    'pending': form.cleaned_data.get('pending', ''),
+                    'status': form.cleaned_data.get('status', ''),
+                    'create_date': datetime.now(),
+                    'desc_update': [
+                        {
+                            'text': form.cleaned_data.get('desc_update', ''),
+                            'timestamp': datetime.now(),
+                            'user_id': user_id
+                        }
+                    ]
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_be_with_form', client_id=client_id, form_name=form_name, be_name=form.cleaned_data.get('be_name', ''))
+
+    return redirect('SEreview:error_page')

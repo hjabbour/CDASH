@@ -1,0 +1,132 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="button-container mb-3">
+  <!-- BE Status Form Links -->
+  <h5>BE Status</h5>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">BE Status - Sec</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='EN' %}" class="btn btn-primary me-2 mb-2">BE Status - EN</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='DC' %}" class="btn btn-primary me-2 mb-2">BE Status - DC</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">BE Status - Collab</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">BE Status - IOT</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">BE Status - SPRouting</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">BE Status - FSO</a>
+  
+  <!-- Initiative Form Links -->
+  <h5>Initiative</h5>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">Initiative - Sec</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='EN' %}" class="btn btn-primary me-2 mb-2">Initiative - EN</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='DC' %}" class="btn btn-primary me-2 mb-2">Initiative - DC</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">Initiative - Collab</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">Initiative - IOT</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">Initiative - SPRouting</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">Initiative - FSO</a>
+  
+  <!-- BE Activity Form Links -->
+  <h5>BE Activity</h5>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">BE Activity - Sec</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='EN' %}" class="btn btn-primary me-2 mb-2">BE Activity - EN</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='DC' %}" class="btn btn-primary me-2 mb-2">BE Activity - DC</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">BE Activity - Collab</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">BE Activity - IOT</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">BE Activity - SPRouting</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">BE Activity - FSO</a>
+</div>
+
+    <!--[top level recent entriers  funnel engages tac ] start-->
+    <div class="col-xl-10 col-md-6">
+      <div class="card Recent-Users">
+        <div class="card-header">
+          <h5>{{ form_name }}</h5>
+        </div>
+        <div class="card-block px-0 py-3">
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  {% for field in fields_to_display %}
+                  <th>{{ field|title }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in data %}
+                <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+                  <td><a class="label theme-bg2 text-white f-12">{{ item.client_name }}{{ item.issue_title }}</a> <p class='badge' text-align: center>{{ item.opportunity_name }}{{ item.case_name }}{{ item.cx_name }}{{ item.activity_name }}</p></td>
+                  <td>{{ item.create_date|date:"M d, Y" }}</td>
+                  {% for update in item.desc_update %}
+                      {% if forloop.last %}
+                      <td>
+                        <h6 class="text-muted">
+                          <i class="fas fa-circle text-c-red f-10 m-r-15"></i>
+                          {{ update.timestamp|date:"M d, Y" }}
+                        </h6>
+                      </td>
+                      {% endif %}
+                    {% endfor %}
+                  <td>
+                    {{ item.pending }}
+                  </td>
+                  <td>
+                    {% for field, value in item.items %}
+                    {% if field == '_id' %}
+                    {% with item_id=value|stringformat:"s" %}
+                      <a href="{% url 'SEreview:update_item' collection_name=form_name|urlencode item_id=item_id %}" class="label theme-bg text-c-red f-12">Update</a>
+                      <a href="{% url 'SEreview:delete_item' collection_name=form_name|urlencode item_id=item_id %}" class="label theme-bg text-white f-12">Delete</a>
+                    {% endwith %}
+                    {% endif %}
+                    {% endfor %}
+                  <td></td>
+                </tr>
+                {% endfor %}
+                <tr class="unread">
+                  <td>
+                  </td>
+                  <td>
+                  </td>
+                  <td>
+                    <a href="{% url 'SEreview:collection_list' form_name %}" class="label theme-bg text-white f-12">View All</a>
+                  </td>
+                  <td>
+                  </td>
+                  <td>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  <!-- form_template.html -->
+
+  <form method="post" action="{% url 'SEreview:process_dash_be' form_name %}">
+    {% csrf_token %}
+    <table class="table">
+      {% for field in form %}
+      <tr>
+        <td>{{ field.label_tag }}</td>
+        <td>
+          {% if field.name == 'client_name' and form_name != 'clients' %}
+          <input type="text" name="{{ field.name }}" value="{{ client_name }}" readonly>
+          {% else %}
+          {{ field }}
+          {% endif %}
+          {% if field.errors %}
+          <ul class="errors">
+            {% for error in field.errors %}
+            <li>{{ error }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    <button type="submit" class="btn btn-primary">Submit</button>
+  </form>
+
+<!-- client_dash_template -->
+
+{% endblock content %}

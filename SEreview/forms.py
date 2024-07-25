@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 
 # 2023 Haytham Jabbour hjabbour
 technologies = ['DC', 'Sec', 'Collab','EN','SDWAN','IOT','SP Routing','Services','FSO']
-BE = ['Sec', 'EN', 'DC','Collab','IOT','SP Routing','FSO']
+BE = ['Sec', 'EN', 'DC','Collab','IOT','SPRouting','FSO']
 entities = ['AM', 'Client', 'SE','BE']
 status_op = ['Active','Booked','Lost','Closed']
 status_act = ['Planned','Initial','Followup','Funnel','Completed']
@@ -223,3 +223,28 @@ class UClientStrategyForm(forms.Form):
     observability_strategy = forms.CharField(label="Observability Strategy", widget=forms.Textarea)
     class Meta:
         fields = ['security_strategy', 'ai_strategy', 'cloud_strategy', 'observability_strategy']
+        
+class BEStatusForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    be_name = generate_dropdown_component(BE)
+    worked_last_year = forms.CharField(widget=forms.Textarea)
+    challenging_last_year = forms.CharField(widget=forms.Textarea)
+    focus_next_year = forms.CharField(widget=forms.Textarea)
+
+class BEInitiativeForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    be_name = generate_dropdown_component(BE)
+    initiative_short = forms.CharField(max_length=100)
+    initiative_desc = forms.CharField(widget=forms.Textarea)
+    expected_outcome = forms.CharField(widget=forms.Textarea)
+    expected_execution_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    owners = generate_multiselect_component(entities)
+    desc_update = forms.CharField(widget=forms.Textarea, required=False)
+
+class BEActivityForm(forms.Form):
+    client_name = forms.CharField(max_length=100)
+    be_name = generate_dropdown_component(BE)
+    initiative = forms.CharField(max_length=100)
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_act)
+    desc_update = forms.CharField(widget=forms.Textarea, required=False)
