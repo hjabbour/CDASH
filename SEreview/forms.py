@@ -13,6 +13,7 @@ status_act = ['Planned','Initial','Followup','Funnel','Completed']
 status_be = ['Planned','Finished','Active','Delayed']
 status_cx = ['Planned','Finished','Active','Delayed']
 status_tac = ['Monitoring','Engaged','Closed']
+status_fy = ['Active','Archived']
 status_issue = ['Active','Resolved','Improved']
 
 pending= ['AM', 'Client','SE','BE','Partner','Leadership','TAC','CX','BU']
@@ -227,6 +228,7 @@ class UClientStrategyForm(forms.Form):
 class BEStatusForm(forms.Form):
     client_name = forms.CharField(max_length=100)
     be_name = generate_dropdown_component(BE)
+    status = generate_radio_component(status_fy)
     worked_last_year = forms.CharField(widget=forms.Textarea)
     challenging_last_year = forms.CharField(widget=forms.Textarea)
     focus_next_year = forms.CharField(widget=forms.Textarea)
@@ -234,6 +236,7 @@ class BEStatusForm(forms.Form):
 class BEInitiativeForm(forms.Form):
     client_name = forms.CharField(max_length=100)
     be_name = generate_dropdown_component(BE)
+    status = generate_radio_component(status_be)
     initiative_short = forms.CharField(max_length=100)
     initiative_desc = forms.CharField(widget=forms.Textarea)
     expected_outcome = forms.CharField(widget=forms.Textarea)
@@ -242,8 +245,10 @@ class BEInitiativeForm(forms.Form):
     desc_update = forms.CharField(widget=forms.Textarea, required=False)
 
 class BEActivityForm(forms.Form):
+    activity_name = forms.CharField(max_length=100)
     client_name = forms.CharField(max_length=100)
     be_name = generate_dropdown_component(BE)
+    status = generate_radio_component(status_be)
     initiative = forms.CharField(max_length=100)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_act)

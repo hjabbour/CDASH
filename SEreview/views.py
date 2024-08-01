@@ -46,7 +46,11 @@ fields_to_display = {
         'issues' : ['Issue title', 'Creation Date','Update', 'Pending','Action'],
         'clients' : ['Client'],
         'swot': ['Strength', 'Weakness', 'Opportunity', 'Threat'],
-        'client_strategy': ['Security Strategy', 'AI Strategy', 'Cloud Strategy', 'Observability Strategy']
+        'client_strategy': ['Security Strategy', 'AI Strategy', 'Cloud Strategy', 'Observability Strategy'],
+        'bestatus': ['Client','BE'],
+        'beinitiative' : ['Client', 'BE', 'Initiative Name', 'Initiative desc', 'Expected Outcome', 'Expected Date', 'Owners', 'desc_update'],
+        'beactivity':['Activity Name','Client', 'BE','Activity', 'Initiative', 'Pending', 'Status', 'Update']
+        
         
         # Add more collections and their corresponding fields here
     }
@@ -113,6 +117,20 @@ def get_existing_clients(user_id):
     client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
     return client_list
 
+def get_existing_beinitiative(client_name, be_name,user_id):
+    collection = db['beinitiative']
+    if is_user_superuser(user_id):
+        existing_beinitiative = collection.find()
+    else:
+        existing_beinitiative = collection.find({'client_name': client_name, 'be_name': be_name})
+    
+    beinitiatives_list = [('None', 'None')] + [
+        (initiative.get('initiative_short', 'None'), initiative.get('initiative_short', 'None')) 
+        for initiative in existing_beinitiative
+    ]
+    
+    return beinitiatives_list
+
 ## this function is to retreive all clients with their id as opposed to just a list of names
 def get_all_clients(user_id):
     collection = db['clients']
@@ -120,6 +138,26 @@ def get_all_clients(user_id):
         existing_clients = collection.find()
     else:
         existing_clients = collection.find({'user_id': user_id})
+
+    return existing_clients
+
+def is_user_in_group(user_id, group_name):
+    user = User.objects.get(id=user_id)
+    return user.groups.filter(name=group_name).exists()
+
+def get_all_clients_for_user(user_id):
+    collection = db['clients']
+    if is_user_superuser(user_id):
+        existing_clients = collection.find()
+    elif is_user_in_group(user_id, 'BE'):
+        # If the user is in the BE group, return all clients
+        existing_clients = collection.find()
+    elif is_user_in_group(user_id, 'SE'):
+        # If the user is in the SE group, return clients where the user_id matches
+        existing_clients = collection.find({'user_id': user_id})
+    else:
+        # If the user is not in either group, return an empty cursor
+        existing_clients = collection.find({'_id': None})  # No client will match this
 
     return existing_clients
 
@@ -446,6 +484,20 @@ def collection_client(collection_name, client_name=None, superuser=False):
 
     data = collection.find(query)
     return data
+
+def collection_client_be(collection_name, client_name=None, be_name=None, superuser=False):
+    collection = db[collection_name]
+    query = {'status': {'$in': toupdatelist}}
+    
+    if client_name:
+        query['client_name'] = client_name
+    
+    if be_name:
+        query['be_name'] = be_name  # Add be_name to the query if it is provided
+
+    data = collection.find(query)
+    return data
+
 
 
 def delete_item(request, collection_name, item_id):
@@ -1316,7 +1368,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     form_class = form_classes[form_name]
     user_id = request.user.id
     data = collection_client(form_name, client['client_name'])  # Fetch data for the specified form and client
-    fields_to_display = []  # Define this based on your logic
+    fields = fields_to_display.get(form_name, [])  # Define this based on your logic
     data = list(data)
     #print(data)
 
@@ -1330,7 +1382,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
         'form': form,
         'form_name': form_name,
         'data': data,
-        'fields_to_display': fields_to_display,
+        'fields_to_display': fields,
     })
     
 @login_required    
@@ -1580,16 +1632,28 @@ def get_client_name_by_id(client_id):
         print(f"Error retrieving client name: {e}")
     return None
 
-@group_required(allowed_groups=['SE'])
-def client_centric_be(request):
+@group_required(allowed_groups=['SE','BE'])
+def client_centric_be(request,be_name=None):
     user_id = request.user.id
-    clients = get_all_clients(user_id)  # Replace with your logic to retrieve clients
-    print(clients)  # Add this line for debugging
+    clients = get_all_clients_for_user(user_id) # Replace with your logic to retrieve clients
+    #print(clients)  # Add this line for debugging
+    if be_name!=None:
+        return render(request, 'SEreview/client_centric_be_name.html', {'clients': clients,'be_name':be_name})
+    else:
+         return render(request, 'SEreview/client_centric_be.html', {'clients': clients})
 
-    return render(request, 'SEreview/client_centric_be.html', {'clients': clients})
 
-@group_required(allowed_groups=['SE'])
-def client_dashboard_be(request, client_id, form_name='bestatus', be_name='Sec'):
+@group_required(allowed_groups=['SE','BE'])
+def client_dashboard_be(request, client_id, form_name=None, be_name=None, source=None):
+    # Set default values if parameters are not provided
+    if form_name is None:
+        form_name = 'bestatus'
+    if be_name is None:
+        be_name = 'Sec'
+    if source is None:
+        source = 'SE'
+    
+    print ("form name "+form_name ,"be_name "+be_name)
     # Define your form classes in a dictionary for easy lookup
     form_classes = {
         'bestatus': BEStatusForm,
@@ -1600,16 +1664,16 @@ def client_dashboard_be(request, client_id, form_name='bestatus', be_name='Sec')
     if request.method == 'GET':
         form_class = form_classes.get(form_name)
         if not form_class:
-            return redirect('SEreview:error_page')  # Redirect if the form_name is not valid
+            error_message = "form ="+form_name+"Source ="+source
+            return redirect('SEreview:error_page_with_message', message=error_message)
         
         user_id = request.user.id
         # Fetch client name based on client_id
         client_name = get_client_name_by_id(client_id)
-        #print("inside the function"+ client_name)
-    
+        
         # Fetch data for the specified form and client
-        data = collection_client(form_name, client_name)  # Fetch data using client_name directly
-        fields_to_display = []  # Define this based on your logic
+        data = collection_client_be(form_name, client_name,be_name)  # Fetch data using client_name directly
+        fields = fields_to_display.get(form_name, [])  # Define this based on your logic # Define this based on your logic
         data = list(data)
         
         # Initialize form with client's name and default be_name
@@ -1619,22 +1683,36 @@ def client_dashboard_be(request, client_id, form_name='bestatus', be_name='Sec')
         }
         form = form_class(initial=initial_form_data)
         
-        # Make 'client_name' and 'be_name' read-only
-        #form.fields['client_name'].widget = TextInput(attrs={'readonly': 'readonly'})
-        #form.fields['be_name'].widget = TextInput(attrs={'readonly': 'readonly'})
+        # Fetch existing clients
+        existing_clients = get_existing_clients(user_id)
         
+        # Initialize context
         context = {
             'form': form,
             'form_name': form_name,
             'client_name': client_name,
             'client_id': client_id,
             'be_name': be_name,
-            'fields_to_display': fields_to_display,
+            'existing_clients': existing_clients,
+            'fields_to_display': fields,
             'data': data
         }
-        return render(request, 'SEreview/client_dashboard_be.html', context)
+        
+        # Fetch existing initiatives only for 'beactivity' form
+        if form_name == 'beactivity':
+            existing_beinitiatives = get_existing_beinitiative(client_name, be_name,user_id)
+            ## debug print
+            #print(existing_beinitiatives)
+            context['existing_initiatives'] = existing_beinitiatives
+        
+        print("Context data:", context['data'])
+        if source == 'SE':
+            return render(request, 'SEreview/client_dashboard_be.html', context)
+        else:
+            return render(request, 'SEreview/client_dashboard_be_name.html', context)
     
     return redirect('SEreview:error_page')
+
 
 def process_dash_be(request, form_name):
     # Define your form classes in a dictionary for easy lookup
@@ -1648,6 +1726,7 @@ def process_dash_be(request, form_name):
         user_id = request.user.id  # Retrieve the logged-in user ID
         client_name = request.POST.get('client_name')  # Retrieve client_name from POST data
         client_id = get_client_id_by_name(client_name)
+        #source = request.POST.get('source')
 
         form_class = form_classes.get(form_name)
         if form_class:
@@ -1657,18 +1736,50 @@ def process_dash_be(request, form_name):
                     'user_id': user_id,
                     'client_name': form.cleaned_data['client_name'],
                     'be_name': form.cleaned_data.get('be_name', ''),  # Default to empty string if not provided
-                    'pending': form.cleaned_data.get('pending', ''),
-                    'status': form.cleaned_data.get('status', ''),
-                    'create_date': datetime.now(),
-                    'desc_update': [
-                        {
-                            'text': form.cleaned_data.get('desc_update', ''),
-                            'timestamp': datetime.now(),
-                            'user_id': user_id
-                        }
-                    ]
+                    'create_date': timezone.now(),
                 }
+
+                # Add form-specific fields
+                if form_name == 'bestatus':
+                    data.update({
+                        'worked_last_year': form.cleaned_data.get('worked_last_year', ''),
+                        'challenging_last_year': form.cleaned_data.get('challenging_last_year', ''),
+                        'status': form.cleaned_data.get('status', ''),
+                        'focus_next_year': form.cleaned_data.get('focus_next_year', '')
+                    })
+                elif form_name == 'beinitiative':
+                    data.update({
+                        'initiative_short': form.cleaned_data.get('initiative_short', ''),
+                        'initiative_desc': form.cleaned_data.get('initiative_desc', ''),
+                        'expected_outcome': form.cleaned_data.get('expected_outcome', ''),
+                        'expected_execution_date':  datetime.combine(form.cleaned_data.get('expected_execution_date'), datetime.min.time()),
+                        'owners': form.cleaned_data.get('owners', []),
+                        'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'user_id': request.user.id,
+                            'timestamp': datetime.now()
+                        }
+                                    ],
+                        'status': form.cleaned_data.get('status', '')
+                    })
+                elif form_name == 'beactivity':
+                    data.update({
+                        'activity_name': form.cleaned_data.get('activity_name', ''),
+                        'initiative': form.cleaned_data.get('initiative', ''),
+                        'pending': form.cleaned_data.get('pending', ''),
+                        'status': form.cleaned_data.get('status', ''),
+                        'desc_update': [
+                        {
+                            'text': form.cleaned_data['desc_update'],
+                            'user_id': request.user.id,
+                            'timestamp': datetime.now()
+                        }
+                                    ],
+                        'status': form.cleaned_data.get('status', '')
+                    })
+
                 process_form_data(form_name, data)
-                return redirect('SEreview:client_dashboard_be_with_form', client_id=client_id, form_name=form_name, be_name=form.cleaned_data.get('be_name', ''))
+                return redirect('SEreview:client_dashboard_be_with_name', client_id=client_id, form_name=form_name, be_name=form.cleaned_data.get('be_name', ''),source=form.cleaned_data.get('source'))
 
     return redirect('SEreview:error_page')

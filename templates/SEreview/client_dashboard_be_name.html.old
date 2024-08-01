@@ -5,33 +5,15 @@
 <div class="button-container mb-3">
   <!-- BE Status Form Links -->
   <h5>BE Status</h5>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">BE Status - Sec</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='EN' %}" class="btn btn-primary me-2 mb-2">BE Status - EN</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='DC' %}" class="btn btn-primary me-2 mb-2">BE Status - DC</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">BE Status - Collab</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">BE Status - IOT</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">BE Status - SPRouting</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='bestatus' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">BE Status - FSO</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_name' client_id=client_id form_name='bestatus' be_name=be_name source='BE' %}" class="btn btn-primary me-2 mb-2">BE Status - {{ be_name }}</a>
   
   <!-- Initiative Form Links -->
   <h5>Initiative</h5>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">Initiative - Sec</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='EN' %}" class="btn btn-primary me-2 mb-2">Initiative - EN</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='DC' %}" class="btn btn-primary me-2 mb-2">Initiative - DC</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">Initiative - Collab</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">Initiative - IOT</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">Initiative - SPRouting</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beinitiative' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">Initiative - FSO</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_name' client_id=client_id form_name='beinitiative' be_name=be_name source='BE' %}" class="btn btn-primary me-2 mb-2">Initiative - {{ be_name }}</a>
   
   <!-- BE Activity Form Links -->
   <h5>BE Activity</h5>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='Sec' %}" class="btn btn-primary me-2 mb-2">BE Activity - Sec</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='EN' %}" class="btn btn-primary me-2 mb-2">BE Activity - EN</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='DC' %}" class="btn btn-primary me-2 mb-2">BE Activity - DC</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='Collab' %}" class="btn btn-primary me-2 mb-2">BE Activity - Collab</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='IOT' %}" class="btn btn-primary me-2 mb-2">BE Activity - IOT</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='SPRouting' %}" class="btn btn-primary me-2 mb-2">BE Activity - SPRouting</a>
-  <a href="{% url 'SEreview:client_dashboard_be_with_form' client_id=client_id form_name='beactivity' be_name='FSO' %}" class="btn btn-primary me-2 mb-2">BE Activity - FSO</a>
+  <a href="{% url 'SEreview:client_dashboard_be_with_name' client_id=client_id form_name='beactivity' be_name=be_name source='BE' %}" class="btn btn-primary me-2 mb-2">BE Activity - {{ be_name }}</a>
 </div>
 
     <!--[top level recent entriers  funnel engages tac ] start-->
@@ -53,7 +35,20 @@
               <tbody>
                 {% for item in data %}
                 <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-                  <td><a class="label theme-bg2 text-white f-12">{{ item.client_name }}{{ item.issue_title }}</a> <p class='badge' text-align: center>{{ item.opportunity_name }}{{ item.case_name }}{{ item.cx_name }}{{ item.activity_name }}</p></td>
+                  <td><a class="label theme-bg2 text-white f-12">{{ item.client_name }}</a></td> <td><a class="label theme-bg2 text-white f-12">{{ item.be_name }}</a> </td> <td><a class="label theme-bg2 text-white f-12"></a>{{item.initiative}}</td> <p class='badge' text-align: center>{{ item.activity_name }}</p></td>
+                  {% if item.worked_last_year %}
+                    
+                  <tr><td><p class='badge' text-align: center></p>{{ item.worked_last_year }}</p></td></tr>
+                  {% endif %}
+                  {% if item.challenging_last_year %}
+                        <tr><td><p class='badge' text-align: center></p>{{ item.worked_last_year }}</p></td></tr>
+                        {% endif %}  
+                  {% if item.focus_next_year %}
+                          <tr><td><p class='badge' text-align: center></p>{{ item.focus_next_year }}</p></td></tr>
+                  {% endif %}
+                       
+
+                       
                   <td>{{ item.create_date|date:"M d, Y" }}</td>
                   {% for update in item.desc_update %}
                       {% if forloop.last %}
@@ -110,6 +105,13 @@
         <td>
           {% if field.name == 'client_name' and form_name != 'clients' %}
           <input type="text" name="{{ field.name }}" value="{{ client_name }}" readonly>
+          {% elif field.name == 'initiative' and form_name == 'beactivity' %}
+                    <select name="{{ field.name }}">
+                        <option value="">Select an initiative</option>
+                        {% for initiative_tuple in existing_initiatives %}
+                              <option value="{{ initiative_tuple.0 }}">{{ initiative_tuple.0 }}</option>
+                        {% endfor %}
+                    </select>
           {% else %}
           {{ field }}
           {% endif %}
@@ -128,7 +130,18 @@
   </form>
 
 <!-- client_dash_template -->
-
+ <!-- Debug: Output existing_initiatives to ensure it is passed correctly -->
+{% if existing_initiatives %}
+<ul>
+    {% for initiative in existing_initiatives %}
+        <li>{{ initiative.0 }} - {{ initiative.1 }}</li>
+    {% endfor %}
+</ul>
+{% else %}
+   
+<p>No existing initiatives found.</p>
+{% endif %}
+ <!-- Debug: Output data as a list to ensure it is passed correctly -->
 {% if data %}
   <ul>
     {% for item in data %}
@@ -138,4 +151,5 @@
 {% else %}
   <p>No data available.</p>
 {% endif %}
+
 {% endblock content %}

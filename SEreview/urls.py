@@ -36,8 +36,10 @@ urlpatterns = [
     path('client_dashboard/<str:client_id>/', views.client_dashboard, name='client_dashboard'),
     path('client_dashboard/<str:client_id>/<str:form_name>/', views.client_dashboard, name='client_dashboard_with_form'),
     path('client-centric_be/', views.client_centric_be, name='client_centric_be'),
+    path('client-centric_be/<str:be_name>', views.client_centric_be, name='client_centric_be_name'),
     path('client_dashboard_be/<str:client_id>/', views.client_dashboard_be, name='client_dashboard_be'),
     path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/', views.client_dashboard_be, name='client_dashboard_be_with_form'),
-
+    path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/<str:source>/', views.client_dashboard_be, name='client_dashboard_be_with_name'),
+    path('process_dash_be/<str:form_name>/', views.process_dash_be, name='process_dash_be'),
 
 ]
