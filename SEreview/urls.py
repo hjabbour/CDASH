@@ -17,6 +17,7 @@ urlpatterns = [
     path('meetings/', views.render_dynamic_form, {'form_name': 'meetings'}, name='meetings'),
     path('process-form/<str:form_name>/', views.process_form_view, name='process_form'),
     path('process-dash/<str:form_name>/', views.process_dash, name='process_dash'),
+    path('process-dash-be/<str:form_name>/', views.process_dash_be, name='process_dash_be'),
     path('collections/<str:collection_name>/', views.collection_list, name='collection_list'),
     path('update/<str:collection_name>/<str:item_id>/', views.update_item, name='update_item'),
     path('delete_item/<str:collection_name>/<str:item_id>/', views.delete_item, name='delete_item'),
@@ -34,6 +35,11 @@ urlpatterns = [
     path('client-centric/', views.client_centric, name='client_centric'),
     path('client_dashboard/<str:client_id>/', views.client_dashboard, name='client_dashboard'),
     path('client_dashboard/<str:client_id>/<str:form_name>/', views.client_dashboard, name='client_dashboard_with_form'),
-
+    path('client-centric_be/', views.client_centric_be, name='client_centric_be'),
+    path('client-centric_be/<str:be_name>', views.client_centric_be, name='client_centric_be_name'),
+    path('client_dashboard_be/<str:client_id>/', views.client_dashboard_be, name='client_dashboard_be'),
+    path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/', views.client_dashboard_be, name='client_dashboard_be_with_form'),
+    path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/<str:source>/', views.client_dashboard_be, name='client_dashboard_be_with_name'),
+    path('process_dash_be/<str:form_name>/', views.process_dash_be, name='process_dash_be'),
 
 ]

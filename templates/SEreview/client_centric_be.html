@@ -1,0 +1,40 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+    <div class="col-xl-10 col-md-6">
+        <div class="card Recent-Users">
+            <div class="card-header">
+                <h5>All Clients</h5>
+            </div>
+            <div class="card-block px-0 py-3">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Client Name</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for client in clients %}
+                            <tr>
+                                <td>{{ client.client_name }}</td>
+                                <td>
+                                    {% for field, value in client.items %}
+                                        {% if field == '_id' %}
+                                            {% with item_id=value|stringformat:"s" %}
+                                                <a href="{% url 'SEreview:client_dashboard_be' client_id=item_id %}" class="btn btn-primary">View Dashboard</a>
+                                            {% endwith %}
+                                        {% endif %}
+                                    {% endfor %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

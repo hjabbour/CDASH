@@ -21,11 +21,12 @@ from django.contrib.auth import logout
 from django.contrib.auth.decorators import user_passes_test
 
 from django.contrib.auth.decorators import login_required
+from functools import wraps
 
 from django.shortcuts import render, redirect, get_object_or_404 
 
-from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm
+from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm,BEStatusForm,BEInitiativeForm,BEActivityForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm
 from .conn import get_mongodb_connection
 
 from collections import defaultdict
@@ -44,13 +45,58 @@ fields_to_display = {
         'tac_case' : ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'issues' : ['Issue title', 'Creation Date','Update', 'Pending','Action'],
         'clients' : ['Client'],
+        'swot': ['Strength', 'Weakness', 'Opportunity', 'Threat'],
+        'client_strategy': ['Security Strategy', 'AI Strategy', 'Cloud Strategy', 'Observability Strategy'],
+        'bestatus': ['Client','BE'],
+        'beinitiative' : ['Client', 'BE', 'Initiative Name', 'Initiative desc', 'Expected Outcome', 'Expected Date', 'Owners', 'desc_update'],
+        'beactivity':['Activity Name','Client', 'BE','Activity', 'Initiative', 'Pending', 'Status', 'Update']
         
-         
+        
         # Add more collections and their corresponding fields here
     }
 
 client = get_mongodb_connection()
 db = client['CDASH']
+
+
+## function to wrap logins
+def group_required(allowed_groups=None):
+    """
+    Decorator to check user group membership and access control.
+
+    Args:
+        allowed_groups (list, optional): A list of allowed group names for this view (e.g., ['SE', 'BE']).
+            If None, only superusers can access the view. Defaults to None.
+
+    Returns:
+        function: A decorator function.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        @login_required
+        def wrapper(request, *args, **kwargs):
+            user = request.user
+
+            if user.is_superuser:  # Superusers have full access
+                return func(request, *args, **kwargs)
+
+            # Check for allowed groups if provided (otherwise only superuser is allowed)
+            if allowed_groups is not None:
+                if user.groups.filter(name__in=allowed_groups).exists():
+                    return func(request, *args, **kwargs)
+                else:
+                    # Handle unauthorized access for non-superusers in non-allowed groups
+                    #return render(request, 'unauthorized.html')  # Or redirect/display error
+                    error_message = "Unauthorized Access"
+                    return redirect('SEreview:error_page_with_message', message=error_message)
+
+            # If no allowed_groups are specified, only superuser can access
+            error_message = "Unauthorized Access"
+            return redirect('SEreview:error_page_with_message', message=error_message)
+
+        return wrapper
+    return decorator  # Correct return of the decorator function
 
 
 # def get_existing_clients(user_id):
@@ -71,6 +117,20 @@ def get_existing_clients(user_id):
     client_list = [(client['client_name'], client['client_name']) for client in existing_clients]
     return client_list
 
+def get_existing_beinitiative(client_name, be_name,user_id):
+    collection = db['beinitiative']
+    if is_user_superuser(user_id):
+        existing_beinitiative = collection.find()
+    else:
+        existing_beinitiative = collection.find({'client_name': client_name, 'be_name': be_name})
+    
+    beinitiatives_list = [('None', 'None')] + [
+        (initiative.get('initiative_short', 'None'), initiative.get('initiative_short', 'None')) 
+        for initiative in existing_beinitiative
+    ]
+    
+    return beinitiatives_list
+
 ## this function is to retreive all clients with their id as opposed to just a list of names
 def get_all_clients(user_id):
     collection = db['clients']
@@ -78,6 +138,26 @@ def get_all_clients(user_id):
         existing_clients = collection.find()
     else:
         existing_clients = collection.find({'user_id': user_id})
+
+    return existing_clients
+
+def is_user_in_group(user_id, group_name):
+    user = User.objects.get(id=user_id)
+    return user.groups.filter(name=group_name).exists()
+
+def get_all_clients_for_user(user_id):
+    collection = db['clients']
+    if is_user_superuser(user_id):
+        existing_clients = collection.find()
+    elif is_user_in_group(user_id, 'BE'):
+        # If the user is in the BE group, return all clients
+        existing_clients = collection.find()
+    elif is_user_in_group(user_id, 'SE'):
+        # If the user is in the SE group, return clients where the user_id matches
+        existing_clients = collection.find({'user_id': user_id})
+    else:
+        # If the user is not in either group, return an empty cursor
+        existing_clients = collection.find({'_id': None})  # No client will match this
 
     return existing_clients
 
@@ -122,6 +202,12 @@ def process_form_data(form_name, data):
         'issues': 'issues',
         'meetings': 'meetings',
         'clients': 'clients',
+        'swot':'swot',
+        'client_strategy':'client_strategy',
+        'bestatus': 'bestatus',
+        'beinitiative': 'beinitiative',
+        'beactivity': 'beactivity'
+        
     }
 
     # Get the collection name based on the form name
@@ -146,6 +232,7 @@ def process_form_data(form_name, data):
 def process_form_view(request, form_name):
     if request.method == 'POST':
         user_id = request.user.id  # Retrieve the logged-in user ID
+        user_first_name = get_user_first_name(request.user.id)
         
         if form_name == 'forecasted_opportunity':
             form = ForecastedOpportunityForm(request.POST)
@@ -161,7 +248,8 @@ def process_form_view(request, form_name):
                     'approx_value': form.cleaned_data['approx_value'],
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -184,7 +272,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -206,7 +295,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -228,7 +318,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -250,7 +341,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -270,7 +362,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -289,7 +382,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -311,7 +405,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -398,6 +493,20 @@ def collection_client(collection_name, client_name=None, superuser=False):
 
     data = collection.find(query)
     return data
+
+def collection_client_be(collection_name, client_name=None, be_name=None, superuser=False):
+    collection = db[collection_name]
+    query = {'status': {'$in': toupdatelist}}
+    
+    if client_name:
+        query['client_name'] = client_name
+    
+    if be_name:
+        query['be_name'] = be_name  # Add be_name to the query if it is provided
+
+    data = collection.find(query)
+    return data
+
 
 
 def delete_item(request, collection_name, item_id):
@@ -498,7 +607,7 @@ def get_user_first_name(user_id):
     except User.DoesNotExist:
         return "notfound"
 
-
+## make sure it working for multiuser updates
 def get_recent_updates():
     collection_names = db.list_collection_names()
 
@@ -515,25 +624,28 @@ def get_recent_updates():
         ])
 
         for update in updates:
-            update_text = update['desc_update']['text'][:50]
-            timestamp = update['desc_update']['timestamp']
-            user_id = update['user_id']
-            client_name = update['client_name']
+            desc_update = update['desc_update']
+            # Check if desc_update is a dictionary with the expected structure
+            if isinstance(desc_update, dict) and 'text' in desc_update and 'timestamp' in desc_update:
+                update_text = desc_update['text'][:50]
+                timestamp = desc_update['timestamp']
+                user_id = desc_update.get('user_id', update.get('user_id', None))  # Use user_id from document if not in desc_update
+                client_name = update.get('client_name', None)
 
-            User = get_user_model()
-            try:
-                user = User.objects.get(id=user_id)
-                user_first_name = user.first_name
-            except User.DoesNotExist:
-                user_first_name = None
+                User = get_user_model()
+                try:
+                    user = User.objects.get(id=user_id) if user_id else None
+                    user_first_name = user.first_name if user else None
+                except User.DoesNotExist:
+                    user_first_name = None
 
-            recent_updates.append({
-                'update_text': update_text,
-                'timestamp': timestamp,
-                'user_id': user_id,
-                'user_first_name': user_first_name,
-                'client_name': client_name
-            })
+                recent_updates.append({
+                    'update_text': update_text,
+                    'timestamp': timestamp,
+                    'user_id': user_id,
+                    'user_first_name': user_first_name,
+                    'client_name': client_name
+                })
 
             # Break the loop if the total number of updates reaches 10
             if len(recent_updates) >= 10:
@@ -544,6 +656,7 @@ def get_recent_updates():
             break
 
     return recent_updates[:10]  # Ensure only 10 updates are returned
+
 
 
 def stats_view(request, user_id=None):
@@ -743,6 +856,7 @@ def update_item(request, collection_name, item_id):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
     item = collection.find_one({'_id': ObjectId(item_id)})
+    user_first_name = get_user_first_name(request.user.id)
 
     # Determine the update form class based on the collection name
     update_form_classes = {
@@ -784,7 +898,8 @@ def update_item(request, collection_name, item_id):
             desc_update_text = update_data.pop('desc_update', None)
             if desc_update_text:
                 update_entry = {
-                    'text': desc_update_text,
+                    #'text': desc_update_text,
+                    'text': f"{user_first_name}: {desc_update_text}",
                     'timestamp': datetime.now()
                 }
                 collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update_entry}})
@@ -1222,6 +1337,7 @@ def monthly_stats(request):
 
 
 @login_required
+@group_required(allowed_groups=['SE'])
 def client_centric(request):
     user_id = request.user.id
     clients = get_all_clients(user_id)  # Replace with your logic to retrieve clients
@@ -1231,6 +1347,7 @@ def client_centric(request):
 
 
 @login_required
+@group_required(allowed_groups=['SE'])
 def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     collection = db['clients']  # Replace with your actual MongoDB collection
     client = collection.find_one({'_id': ObjectId(client_id)})
@@ -1255,6 +1372,8 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
         'tac_case': TACCaseForm,
         'issues': IssuesForm,
         'clients': ClientForm,
+        'swot': SwotForm,
+        'client_strategy': ClientStrategyForm,
     }
 
     # Validate if form_name is in the form_classes dictionary
@@ -1264,7 +1383,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
     form_class = form_classes[form_name]
     user_id = request.user.id
     data = collection_client(form_name, client['client_name'])  # Fetch data for the specified form and client
-    fields_to_display = []  # Define this based on your logic
+    fields = fields_to_display.get(form_name, [])  # Define this based on your logic
     data = list(data)
     #print(data)
 
@@ -1278,13 +1397,14 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
         'form': form,
         'form_name': form_name,
         'data': data,
-        'fields_to_display': fields_to_display,
+        'fields_to_display': fields,
     })
     
 @login_required    
 def process_dash(request, form_name):
     if request.method == 'POST':
         user_id = request.user.id  # Retrieve the logged-in user ID
+        user_first_name = get_user_first_name(request.user.id)
 
         client_name = request.POST.get('client_name')  # Retrieve client_name from POST data if available
         client_id = get_client_id_by_name(client_name)
@@ -1303,7 +1423,8 @@ def process_dash(request, form_name):
                     'approx_value': form.cleaned_data['approx_value'],
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1325,7 +1446,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1346,7 +1468,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1367,7 +1490,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1388,7 +1512,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1407,7 +1532,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1425,7 +1551,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1450,7 +1577,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1474,6 +1602,37 @@ def process_dash(request, form_name):
                 else:
                     error_message = "Client already exists."
                     return redirect('SEreview:error_page_with_message', message=error_message)
+                
+        elif form_name == 'swot':
+            form = SwotForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'strength': form.cleaned_data['strength'],
+                    'weakness': form.cleaned_data['weakness'],
+                    'opportunity': form.cleaned_data['opportunity'],
+                    'threat': form.cleaned_data['threat'],
+                    'create_date': datetime.now()
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+
+        elif form_name == 'client_strategy':
+            form = ClientStrategyForm(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'security_strategy': form.cleaned_data['security_strategy'],
+                    'ai_strategy': form.cleaned_data['ai_strategy'],
+                    'cloud_strategy': form.cleaned_data['cloud_strategy'],
+                    'observability_strategy': form.cleaned_data['observability_strategy'],
+                    'create_date': datetime.now()
+                }
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_with_form', client_id=client_id, form_name=form_name)
+    
 
     else:
         return redirect('SEreview:error_page')
@@ -1484,3 +1643,168 @@ def get_client_id_by_name(client_name):
     if result:
         return str(result['_id'])
     return None
+
+# Function to get the client name by client_id
+def get_client_name_by_id(client_id):
+    try:
+        collection = db['clients']
+        result = collection.find_one({'_id': ObjectId(client_id)})
+        if result:
+            print (result['client_name'])
+            return str(result['client_name'])
+    except Exception as e:
+        print(f"Error retrieving client name: {e}")
+    return None
+
+@group_required(allowed_groups=['SE','BE'])
+def client_centric_be(request,be_name=None):
+    user_id = request.user.id
+    clients = get_all_clients_for_user(user_id) # Replace with your logic to retrieve clients
+    #print(clients)  # Add this line for debugging
+    if be_name!=None:
+        return render(request, 'SEreview/client_centric_be_name.html', {'clients': clients,'be_name':be_name})
+    else:
+         return render(request, 'SEreview/client_centric_be.html', {'clients': clients})
+
+
+@group_required(allowed_groups=['SE','BE'])
+def client_dashboard_be(request, client_id, form_name=None, be_name=None, source=None):
+    # Set default values if parameters are not provided
+    if form_name is None:
+        form_name = 'bestatus'
+    if be_name is None:
+        be_name = 'Sec'
+    if source is None:
+        source = 'SE'
+    
+    print ("form name "+form_name ,"be_name "+be_name)
+    # Define your form classes in a dictionary for easy lookup
+    form_classes = {
+        'bestatus': BEStatusForm,
+        'beinitiative': BEInitiativeForm,
+        'beactivity': BEActivityForm,
+    }
+    
+    if request.method == 'GET':
+        form_class = form_classes.get(form_name)
+        if not form_class:
+            error_message = "form ="+form_name+"Source ="+source
+            return redirect('SEreview:error_page_with_message', message=error_message)
+        
+        user_id = request.user.id
+        # Fetch client name based on client_id
+        client_name = get_client_name_by_id(client_id)
+        
+        # Fetch data for the specified form and client
+        data = collection_client_be(form_name, client_name,be_name)  # Fetch data using client_name directly
+        fields = fields_to_display.get(form_name, [])  # Define this based on your logic # Define this based on your logic
+        data = list(data)
+        
+        # Initialize form with client's name and default be_name
+        initial_form_data = {
+            'client_name': client_name,
+            'be_name': be_name
+        }
+        form = form_class(initial=initial_form_data)
+        
+        # Fetch existing clients
+        existing_clients = get_existing_clients(user_id)
+        
+        # Initialize context
+        context = {
+            'form': form,
+            'form_name': form_name,
+            'client_name': client_name,
+            'client_id': client_id,
+            'be_name': be_name,
+            'existing_clients': existing_clients,
+            'fields_to_display': fields,
+            'data': data
+        }
+        
+        # Fetch existing initiatives only for 'beactivity' form
+        if form_name == 'beactivity':
+            existing_beinitiatives = get_existing_beinitiative(client_name, be_name,user_id)
+            ## debug print
+            #print(existing_beinitiatives)
+            context['existing_initiatives'] = existing_beinitiatives
+        
+        print("Context data:", context['data'])
+        if source == 'SE':
+            return render(request, 'SEreview/client_dashboard_be.html', context)
+        else:
+            return render(request, 'SEreview/client_dashboard_be_name.html', context)
+    
+    return redirect('SEreview:error_page')
+
+
+def process_dash_be(request, form_name):
+    # Define your form classes in a dictionary for easy lookup
+    form_classes = {
+        'bestatus': BEStatusForm,
+        'beinitiative': BEInitiativeForm,
+        'beactivity': BEActivityForm,
+    }
+
+    if request.method == 'POST':
+        user_id = request.user.id  # Retrieve the logged-in user ID
+        client_name = request.POST.get('client_name')  # Retrieve client_name from POST data
+        client_id = get_client_id_by_name(client_name)
+        user_first_name = get_user_first_name(request.user.id)
+        #source = request.POST.get('source')
+
+        form_class = form_classes.get(form_name)
+        if form_class:
+            form = form_class(request.POST)
+            if form.is_valid():
+                data = {
+                    'user_id': user_id,
+                    'client_name': form.cleaned_data['client_name'],
+                    'be_name': form.cleaned_data.get('be_name', ''),  # Default to empty string if not provided
+                    'create_date': timezone.now(),
+                }
+
+                # Add form-specific fields
+                if form_name == 'bestatus':
+                    data.update({
+                        'worked_last_year': form.cleaned_data.get('worked_last_year', ''),
+                        'challenging_last_year': form.cleaned_data.get('challenging_last_year', ''),
+                        'status': form.cleaned_data.get('status', ''),
+                        'focus_next_year': form.cleaned_data.get('focus_next_year', '')
+                    })
+                elif form_name == 'beinitiative':
+                    data.update({
+                        'initiative_short': form.cleaned_data.get('initiative_short', ''),
+                        'initiative_desc': form.cleaned_data.get('initiative_desc', ''),
+                        'expected_outcome': form.cleaned_data.get('expected_outcome', ''),
+                        'expected_execution_date':  datetime.combine(form.cleaned_data.get('expected_execution_date'), datetime.min.time()),
+                        'owners': form.cleaned_data.get('owners', []),
+                        'desc_update': [
+                        {
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
+                            'user_id': request.user.id,
+                            'timestamp': datetime.now()
+                        }
+                                    ],
+                        'status': form.cleaned_data.get('status', '')
+                    })
+                elif form_name == 'beactivity':
+                    data.update({
+                        'activity_name': form.cleaned_data.get('activity_name', ''),
+                        'initiative': form.cleaned_data.get('initiative', ''),
+                        'pending': form.cleaned_data.get('pending', ''),
+                        'status': form.cleaned_data.get('status', ''),
+                        'desc_update': [
+                        {
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
+                            'user_id': request.user.id,
+                            'timestamp': datetime.now()
+                        }
+                                    ],
+                        'status': form.cleaned_data.get('status', '')
+                    })
+
+                process_form_data(form_name, data)
+                return redirect('SEreview:client_dashboard_be_with_name', client_id=client_id, form_name=form_name, be_name=form.cleaned_data.get('be_name', ''),source=form.cleaned_data.get('source'))
+
+    return redirect('SEreview:error_page')
