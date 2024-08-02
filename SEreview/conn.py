@@ -7,7 +7,11 @@ def get_mongodb_connection():
         client = MongoClient(mongodb_url)
     else:
         # Fallback to a hardcoded URL
+<<<<<<< Updated upstream
         client = MongoClient('mongodb://root:rootpassword@10.113.108.246:27017')
+=======
+        client = MongoClient('mongodb://root:rootpassword@10.113.108.252:27017')
+>>>>>>> Stashed changes
         #client = MongoClient('mongodb://root:rootpassword@10.113.108.253:27017')
         #client = MongoClient('mongodb://root:password@192.168.0.214:27017')
         #client = MongoClient('mongodb://root:rootpassword@192.168.2.111:27017')
