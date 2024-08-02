@@ -65,7 +65,7 @@
           </thead>
           <tbody>
             {% for item in data %}
-            <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+           
               {% if form_name == 'bestatus' %}
                 <td>{{ item.client_name }}</td>
                 <td>{{ item.be_name }}</td>

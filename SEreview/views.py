@@ -232,6 +232,7 @@ def process_form_data(form_name, data):
 def process_form_view(request, form_name):
     if request.method == 'POST':
         user_id = request.user.id  # Retrieve the logged-in user ID
+        user_first_name = get_user_first_name(request.user.id)
         
         if form_name == 'forecasted_opportunity':
             form = ForecastedOpportunityForm(request.POST)
@@ -247,7 +248,8 @@ def process_form_view(request, form_name):
                     'approx_value': form.cleaned_data['approx_value'],
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -270,7 +272,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -292,7 +295,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -314,7 +318,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -336,7 +341,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -356,7 +362,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -375,7 +382,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -397,7 +405,8 @@ def process_form_view(request, form_name):
                     'create_date' :datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                                     ]
@@ -598,7 +607,7 @@ def get_user_first_name(user_id):
     except User.DoesNotExist:
         return "notfound"
 
-
+## make sure it working for multiuser updates
 def get_recent_updates():
     collection_names = db.list_collection_names()
 
@@ -615,25 +624,28 @@ def get_recent_updates():
         ])
 
         for update in updates:
-            update_text = update['desc_update']['text'][:50]
-            timestamp = update['desc_update']['timestamp']
-            user_id = update['user_id']
-            client_name = update['client_name']
+            desc_update = update['desc_update']
+            # Check if desc_update is a dictionary with the expected structure
+            if isinstance(desc_update, dict) and 'text' in desc_update and 'timestamp' in desc_update:
+                update_text = desc_update['text'][:50]
+                timestamp = desc_update['timestamp']
+                user_id = desc_update.get('user_id', update.get('user_id', None))  # Use user_id from document if not in desc_update
+                client_name = update.get('client_name', None)
 
-            User = get_user_model()
-            try:
-                user = User.objects.get(id=user_id)
-                user_first_name = user.first_name
-            except User.DoesNotExist:
-                user_first_name = None
+                User = get_user_model()
+                try:
+                    user = User.objects.get(id=user_id) if user_id else None
+                    user_first_name = user.first_name if user else None
+                except User.DoesNotExist:
+                    user_first_name = None
 
-            recent_updates.append({
-                'update_text': update_text,
-                'timestamp': timestamp,
-                'user_id': user_id,
-                'user_first_name': user_first_name,
-                'client_name': client_name
-            })
+                recent_updates.append({
+                    'update_text': update_text,
+                    'timestamp': timestamp,
+                    'user_id': user_id,
+                    'user_first_name': user_first_name,
+                    'client_name': client_name
+                })
 
             # Break the loop if the total number of updates reaches 10
             if len(recent_updates) >= 10:
@@ -644,6 +656,7 @@ def get_recent_updates():
             break
 
     return recent_updates[:10]  # Ensure only 10 updates are returned
+
 
 
 def stats_view(request, user_id=None):
@@ -843,6 +856,7 @@ def update_item(request, collection_name, item_id):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
     item = collection.find_one({'_id': ObjectId(item_id)})
+    user_first_name = get_user_first_name(request.user.id)
 
     # Determine the update form class based on the collection name
     update_form_classes = {
@@ -884,7 +898,8 @@ def update_item(request, collection_name, item_id):
             desc_update_text = update_data.pop('desc_update', None)
             if desc_update_text:
                 update_entry = {
-                    'text': desc_update_text,
+                    #'text': desc_update_text,
+                    'text': f"{user_first_name}: {desc_update_text}",
                     'timestamp': datetime.now()
                 }
                 collection.update_one({'_id': ObjectId(item_id)}, {'$push': {'desc_update': update_entry}})
@@ -1389,6 +1404,7 @@ def client_dashboard(request, client_id, form_name='forecasted_opportunity'):
 def process_dash(request, form_name):
     if request.method == 'POST':
         user_id = request.user.id  # Retrieve the logged-in user ID
+        user_first_name = get_user_first_name(request.user.id)
 
         client_name = request.POST.get('client_name')  # Retrieve client_name from POST data if available
         client_id = get_client_id_by_name(client_name)
@@ -1407,7 +1423,8 @@ def process_dash(request, form_name):
                     'approx_value': form.cleaned_data['approx_value'],
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1429,7 +1446,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1450,7 +1468,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1471,7 +1490,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1492,7 +1512,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1511,7 +1532,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1529,7 +1551,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1554,7 +1577,8 @@ def process_dash(request, form_name):
                     'create_date': datetime.now(),
                     'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            #'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'timestamp': datetime.now()
                         }
                     ]
@@ -1726,6 +1750,7 @@ def process_dash_be(request, form_name):
         user_id = request.user.id  # Retrieve the logged-in user ID
         client_name = request.POST.get('client_name')  # Retrieve client_name from POST data
         client_id = get_client_id_by_name(client_name)
+        user_first_name = get_user_first_name(request.user.id)
         #source = request.POST.get('source')
 
         form_class = form_classes.get(form_name)
@@ -1756,7 +1781,7 @@ def process_dash_be(request, form_name):
                         'owners': form.cleaned_data.get('owners', []),
                         'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'user_id': request.user.id,
                             'timestamp': datetime.now()
                         }
@@ -1771,7 +1796,7 @@ def process_dash_be(request, form_name):
                         'status': form.cleaned_data.get('status', ''),
                         'desc_update': [
                         {
-                            'text': form.cleaned_data['desc_update'],
+                            'text': f"{user_first_name}: {form.cleaned_data['desc_update']}",
                             'user_id': request.user.id,
                             'timestamp': datetime.now()
                         }

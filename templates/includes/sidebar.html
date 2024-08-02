@@ -95,24 +95,40 @@
         </ul>
       </li>
 
-        <li
-          data-username="BE planning "
-          class="nav-item pcoded-hasmenu">
-          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
-                class="feather icon-lock"></i></span><span class="pcoded-mtext">BE Planning</span></a>
-          <ul class="pcoded-submenu">
-            <li class=""><a href="{% url 'SEreview:client_centric_be' %}" class="">Client Centric BE</a></li>
-          </ul>
-          <ul class="pcoded-submenu">
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='EN' %}" class="">NX</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Sec' %}" class="">Security</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Collab' %}" class="">Collab</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='DC' %}" class="">DC</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='FSO' %}" class="">Observability</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='IOT' %}" class="">IOT</a></li>
-            <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='SPRouting' %}" class="">SP Routing</a></li>
-          </ul>
-        </li>
+      <li data-username="BE planning" class="nav-item pcoded-hasmenu">
+        <a href="javascript:" class="nav-link">
+          <span class="pcoded-micon"><i class="feather icon-lock"></i></span>
+          <span class="pcoded-mtext">BE Planning</span>
+        </a>
+        <ul class="pcoded-submenu">
+          <li class=""><a href="{% url 'SEreview:client_centric_be' %}" class="">SE Client Centric</a></li>
+          <li class="pcoded-hasmenu">
+            <a href="javascript:" class="">BE Client Centric</a>
+            <ul class="pcoded-submenu">
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='EN' %}" class="">NX</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Sec' %}" class="">Security</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Collab' %}" class="">Collab</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='DC' %}" class="">DC</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='FSO' %}" class="">Observability</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='IOT' %}" class="">IOT</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='SPRouting' %}" class="">SP Routing</a></li>
+            </ul>
+          </li>
+          <li class="pcoded-hasmenu">
+            <a href="javascript:" class="">BE Centric</a>
+            <ul class="pcoded-submenu">
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='EN' %}" class="">NX</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Sec' %}" class="">Security</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Collab' %}" class="">Collab</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='DC' %}" class="">DC</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='FSO' %}" class="">Observability</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='IOT' %}" class="">IOT</a></li>
+              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='SPRouting' %}" class="">SP Routing</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      
 
         <li
         data-username="Initiatives "

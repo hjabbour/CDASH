@@ -38,36 +38,91 @@
     <div class="col-xl-10 col-md-6">
       <div class="card Recent-Users">
         <div class="card-header">
-          <h5>{{ form_name }}</h5>
+          <h5>{{ form_name|title }}</h5>
         </div>
         <div class="card-block px-0 py-3">
           <div class="table-responsive">
             <table class="table table-hover">
               <thead>
                 <tr>
-                  {% for field in fields_to_display %}
-                  <th>{{ field|title }}</th>
-                  {% endfor %}
+                  {% if form_name == 'bestatus' %}
+                    <th>Client Name</th>
+                    <th>BE Name</th>
+                    <th>Status</th>
+                    <th>Worked Last Year</th>
+                    <th>Challenging Last Year</th>
+                    <th>Focus Next Year</th>
+                    <th>Create Date</th>
+    
+                    <th>Actions</th>
+                  {% elif form_name == 'beinitiative' %}
+                    <th>Client Name</th>
+                    <th>BE Name</th>
+                    <th>Status</th>
+                    <th>Initiative Short</th>
+                    <th>Initiative Description</th>
+                    <th>Expected Outcome</th>
+                    <th>Expected Execution Date</th>
+                    <th>Owners</th>
+                    <th>Create Date</th>
+                    <th>Actions</th>
+                  {% elif form_name == 'beactivity' %}
+                    <th>Activity Name</th>
+                    <th>Client Name</th>
+                    <th>BE Name</th>
+                    <th>Status</th>
+                    <th>Initiative</th>
+                    <th>Pending</th>
+                    <th>Status</th>
+                    <th>Create Date</th>
+                    <th>Last Update</th>
+                    <th>Actions</th>
+                  {% endif %}
                 </tr>
               </thead>
               <tbody>
                 {% for item in data %}
-                <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
-                  <td><a class="label theme-bg2 text-white f-12">{{ item.client_name }}{{ item.issue_title }}</a> <p class='badge' text-align: center>{{ item.opportunity_name }}{{ item.case_name }}{{ item.cx_name }}{{ item.activity_name }}</p></td>
-                  <td>{{ item.create_date|date:"M d, Y" }}</td>
-                  {% for update in item.desc_update %}
-                      {% if forloop.last %}
-                      <td>
-                        <h6 class="text-muted">
-                          <i class="fas fa-circle text-c-red f-10 m-r-15"></i>
-                          {{ update.timestamp|date:"M d, Y" }}
-                        </h6>
-                      </td>
-                      {% endif %}
-                    {% endfor %}
-                  <td>
-                    {{ item.pending }}
-                  </td>
+               
+                  {% if form_name == 'bestatus' %}
+                    <td>{{ item.client_name }}</td>
+                    <td>{{ item.be_name }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.worked_last_year }}</td>
+                    <td>{{ item.challenging_last_year }}</td>
+                    <td>{{ item.focus_next_year }}</td>
+                    <td>{{ item.create_date }}</td>
+    
+                  {% elif form_name == 'beinitiative' %}
+                    <td>{{ item.client_name }}</td>
+                    <td>{{ item.be_name }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.initiative_short }}</td>
+                    <td>{{ item.initiative_desc }}</td>
+                    <td>{{ item.expected_outcome }}</td>
+                    <td>{{ item.expected_execution_date|date:"M d, Y" }}</td>
+                    <td>{{ item.owners }}</td>
+                    <td>{{ item.create_date }}</td>
+              
+                  {% elif form_name == 'beactivity' %}
+                                  <tr class="unread" data-toggle="popover" data-trigger="hover" data-html="true" data-content="{% for update in item.desc_update %}<p class='text-dark'>{{ update.text }}</p><p class='text-muted'>{{ update.timestamp|date:"M d, Y" }}</p>{% endfor %}">
+    
+                    <td>{{ item.activity_name }}</td>
+                    <td>{{ item.client_name }}</td>
+                    <td>{{ item.be_name }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.initiative }}</td>
+                    <td>{{ item.pending }}</td>
+                    <td>{{ item.status }}</td>
+                    <td>{{ item.create_date }}</td>
+                    {% for update in item.desc_update %}
+                    {% if forloop.last %}
+                    <td>
+                        {{ update.timestamp|date:"M d, Y" }}
+                    </td>
+                    {% endif %}
+                  {% endfor %}
+                  {% endif %}
+                 
                   <td>
                     {% for field, value in item.items %}
                     {% if field == '_id' %}
@@ -77,20 +132,12 @@
                     {% endwith %}
                     {% endif %}
                     {% endfor %}
-                  <td></td>
+                  </td>
                 </tr>
                 {% endfor %}
                 <tr class="unread">
-                  <td>
-                  </td>
-                  <td>
-                  </td>
-                  <td>
+                  <td colspan="100%">
                     <a href="{% url 'SEreview:collection_list' form_name %}" class="label theme-bg text-white f-12">View All</a>
-                  </td>
-                  <td>
-                  </td>
-                  <td>
                   </td>
                 </tr>
               </tbody>
