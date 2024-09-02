@@ -232,6 +232,11 @@ class BEStatusForm(forms.Form):
     worked_last_year = forms.CharField(widget=forms.Textarea)
     challenging_last_year = forms.CharField(widget=forms.Textarea)
     focus_next_year = forms.CharField(widget=forms.Textarea)
+    
+class UBEStatusForm(forms.Form):
+    worked_last_year = forms.CharField(widget=forms.Textarea)
+    challenging_last_year = forms.CharField(widget=forms.Textarea)
+    focus_next_year = forms.CharField(widget=forms.Textarea)
 
 class BEInitiativeForm(forms.Form):
     client_name = forms.CharField(max_length=100)
@@ -243,6 +248,14 @@ class BEInitiativeForm(forms.Form):
     expected_execution_date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
     owners = generate_multiselect_component(entities)
     desc_update = forms.CharField(widget=forms.Textarea, required=False)
+    
+class UBEInitiativeForm(forms.Form):
+    status = generate_radio_component(status_be)
+    initiative_short = forms.CharField(max_length=100)
+    initiative_desc = forms.CharField(widget=forms.Textarea)
+    expected_outcome = forms.CharField(widget=forms.Textarea)
+    owners = generate_multiselect_component(entities)
+    desc_update = forms.CharField(widget=forms.Textarea, required=False)
 
 class BEActivityForm(forms.Form):
     activity_name = forms.CharField(max_length=100)
@@ -250,6 +263,12 @@ class BEActivityForm(forms.Form):
     be_name = generate_dropdown_component(BE)
     status = generate_radio_component(status_be)
     initiative = forms.CharField(max_length=100)
+    pending = generate_radio_component(pending)
+    status = generate_radio_component(status_act)
+    desc_update = forms.CharField(widget=forms.Textarea, required=False)
+    
+class UBEActivityForm(forms.Form):
+    status = generate_radio_component(status_be)
     pending = generate_radio_component(pending)
     status = generate_radio_component(status_act)
     desc_update = forms.CharField(widget=forms.Textarea, required=False)

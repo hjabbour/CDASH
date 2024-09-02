@@ -26,7 +26,7 @@ from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404 
 
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm,BEStatusForm,BEInitiativeForm,BEActivityForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm,UBEStatusForm,UBEInitiativeForm,UBEActivityForm
 from .conn import get_mongodb_connection
 
 from collections import defaultdict
@@ -851,7 +851,7 @@ def check_client_exists(client_name, user_id):
 
     # If an existing client is found, return True; otherwise, return False
     return existing_client is not None
-
+@login_required
 def update_item(request, collection_name, item_id):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
@@ -869,6 +869,13 @@ def update_item(request, collection_name, item_id):
         'tac_case': UTACCaseForm,
         'issues': UIssuesForm,
         'clients': UClientForm,
+        'swot': USwotForm,
+        'client_startegy':UClientStrategyForm,
+        'bestatus': UBEStatusForm,
+        'beinitiative': UBEInitiativeForm,
+        'beactivity':UBEActivityForm
+            
+        ## ,USwotForm,UClientStrategyForm,UBEStatusForm,UBEInitiativeForm,UBEActivityForm
     }
 
     UpdateForm = update_form_classes.get(collection_name)

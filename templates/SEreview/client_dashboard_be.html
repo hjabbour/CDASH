@@ -157,6 +157,13 @@
         <td>
           {% if field.name == 'client_name' and form_name != 'clients' %}
           <input type="text" name="{{ field.name }}" value="{{ client_name }}" readonly>
+          {% elif field.name == 'initiative' and form_name == 'beactivity' %}
+          <select name="{{ field.name }}">
+              <option value="">Select an initiative</option>
+              {% for initiative_tuple in existing_initiatives %}
+                    <option value="{{ initiative_tuple.0 }}">{{ initiative_tuple.0 }}</option>
+              {% endfor %}
+          </select>
           {% else %}
           {{ field }}
           {% endif %}
