@@ -26,7 +26,7 @@ from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404 
 
 from .forms import ForecastedOpportunityForm, FunnelOpportunityForm,ActivityForm, BEEngagementActivityForm, CXEngagementActivityForm, TACCaseForm, IssuesForm,WeeklyMeetingForm,EngineerSelectionForm,ClientForm,DateRangeForm,SwotForm,ClientStrategyForm,BEStatusForm,BEInitiativeForm,BEActivityForm
-from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm
+from .forms import UForecastedOpportunityForm, UFunnelOpportunityForm,UActivityForm, UBEEngagementActivityForm, UCXEngagementActivityForm, UTACCaseForm, UIssuesForm,UWeeklyMeetingForm,UClientForm,USwotForm,UClientStrategyForm,UBEStatusForm,UBEInitiativeForm,UBEActivityForm
 from .conn import get_mongodb_connection
 
 from collections import defaultdict
@@ -851,7 +851,7 @@ def check_client_exists(client_name, user_id):
 
     # If an existing client is found, return True; otherwise, return False
     return existing_client is not None
-
+@login_required
 def update_item(request, collection_name, item_id):
     user_id = request.user.id  # Retrieve the logged-in user ID
     collection = db[collection_name]
@@ -869,6 +869,13 @@ def update_item(request, collection_name, item_id):
         'tac_case': UTACCaseForm,
         'issues': UIssuesForm,
         'clients': UClientForm,
+        'swot': USwotForm,
+        'client_startegy':UClientStrategyForm,
+        'bestatus': UBEStatusForm,
+        'beinitiative': UBEInitiativeForm,
+        'beactivity':UBEActivityForm
+            
+        ## ,USwotForm,UClientStrategyForm,UBEStatusForm,UBEInitiativeForm,UBEActivityForm
     }
 
     UpdateForm = update_form_classes.get(collection_name)
@@ -1729,7 +1736,7 @@ def client_dashboard_be(request, client_id, form_name=None, be_name=None, source
             #print(existing_beinitiatives)
             context['existing_initiatives'] = existing_beinitiatives
         
-        print("Context data:", context['data'])
+        #print("Context data:", context['data'])
         if source == 'SE':
             return render(request, 'SEreview/client_dashboard_be.html', context)
         else:
@@ -1807,4 +1814,70 @@ def process_dash_be(request, form_name):
                 process_form_data(form_name, data)
                 return redirect('SEreview:client_dashboard_be_with_name', client_id=client_id, form_name=form_name, be_name=form.cleaned_data.get('be_name', ''),source=form.cleaned_data.get('source'))
 
+    return redirect('SEreview:error_page')
+@login_required
+def be_dashboard_be(request, form_name=None, be_name=None, source=None):
+    user_id = request.user.id
+    # Set default values if parameters are not provided
+    if form_name is None:
+        form_name = 'bestatus'
+    if be_name is None:
+        be_name = 'Sec'
+    if source is None:
+        source = 'BE'
+
+    print("form name:", form_name, "be_name:", be_name)
+    
+    # Define your form classes in a dictionary for easy lookup
+    form_classes = {
+        'bestatus': BEStatusForm,
+        'beinitiative': BEInitiativeForm,
+        'beactivity': BEActivityForm,
+    }
+    
+    if request.method == 'GET':
+        form_class = form_classes.get(form_name)
+        if not form_class:
+            error_message = "form =" + form_name + " Source =" + source
+            return redirect('SEreview:error_page_with_message', message=error_message)
+
+        user_id = request.user.id
+        
+        # Fetch all clients for the user
+        existing_clients_cursor = get_all_clients_for_user(user_id)
+        existing_clients = list(existing_clients_cursor)
+        #print('existing clients' f"{existing_clients}")
+        
+        # Fetch data for the specified form and BE
+        data = collection_client_be(form_name, None, be_name)  # Fetch data using be_name directly
+        fields = fields_to_display.get(form_name, [])  # Define this based on your logic
+        data = list(data)
+        
+        # Initialize form with default be_name
+        initial_form_data = {
+            'be_name': be_name
+        }
+        form = form_class(initial=initial_form_data)
+        
+        # Initialize context
+        context = {
+            'form': form,
+            'form_name': form_name,
+            'be_name': be_name,
+            'existing_clients': existing_clients,
+            'fields_to_display': fields,
+            'data': data
+        }
+        
+        # Fetch existing initiatives only for 'beactivity' form
+        if form_name == 'beactivity':
+            existing_beinitiatives = get_existing_beinitiative(None, be_name, user_id)
+            context['existing_initiatives'] = existing_beinitiatives
+        
+        #print("Context data:", context['data'])
+        if source == 'SE':
+            return render(request, 'SEreview/be_dashboard_be.html', context)
+        else:
+            return render(request, 'SEreview/be_dashboard_be.html', context)
+    
     return redirect('SEreview:error_page')

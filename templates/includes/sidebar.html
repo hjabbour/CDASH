@@ -115,16 +115,17 @@
             </ul>
           </li>
           <li class="pcoded-hasmenu">
-            <a href="javascript:" class="">BE Centric</a>
-            <ul class="pcoded-submenu">
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='EN' %}" class="">NX</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Sec' %}" class="">Security</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Collab' %}" class="">Collab</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='DC' %}" class="">DC</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='FSO' %}" class="">Observability</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='IOT' %}" class="">IOT</a></li>
-              <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='SPRouting' %}" class="">SP Routing</a></li>
-            </ul>
+    <a href="javascript:" class="">BE Centric</a>
+    <ul class="pcoded-submenu">
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='EN' source='SE' %}" class="">NX</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='Sec' source='SE' %}" class="">Security</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='Collab' source='SE' %}" class="">Collab</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='DC' source='SE' %}" class="">DC</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='FSO' source='SE' %}" class="">Observability</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='IOT' source='SE' %}" class="">IOT</a></li>
+        <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='SPRouting' source='SE' %}" class="">SP Routing</a></li>
+    </ul>
+</li>
           </li>
         </ul>
       </li>

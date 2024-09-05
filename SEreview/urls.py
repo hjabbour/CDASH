@@ -41,5 +41,6 @@ urlpatterns = [
     path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/', views.client_dashboard_be, name='client_dashboard_be_with_form'),
     path('client_dashboard_be/<str:client_id>/<str:form_name>/<str:be_name>/<str:source>/', views.client_dashboard_be, name='client_dashboard_be_with_name'),
     path('process_dash_be/<str:form_name>/', views.process_dash_be, name='process_dash_be'),
+    path('be_dashboard_be/<str:form_name>/<str:be_name>/<str:source>/', views.be_dashboard_be, name='be_dashboard_be'),
 
 ]
