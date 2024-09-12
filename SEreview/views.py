@@ -857,6 +857,9 @@ def update_item(request, collection_name, item_id):
     collection = db[collection_name]
     item = collection.find_one({'_id': ObjectId(item_id)})
     user_first_name = get_user_first_name(request.user.id)
+    
+    # Get the 'next' parameter from the GET request
+    next_url = request.GET.get('next_url', None)
 
     # Determine the update form class based on the collection name
     update_form_classes = {
@@ -884,6 +887,8 @@ def update_item(request, collection_name, item_id):
         return HttpResponse('Invalid collection name')
 
     if request.method == 'POST':
+        print(request.POST)  # Add this line to check the POST data
+        next_url = request.POST.get('next_url', None)
         form = UpdateForm(request.POST)
         if form.is_valid():
             # Create an update_data dictionary from the form's cleaned data
@@ -928,14 +933,18 @@ def update_item(request, collection_name, item_id):
                 forecasted_collection = db['forecasted_opportunity']
                 forecasted_collection.insert_one(record_data)
             
-            return redirect('SEreview:collection_list', collection_name=collection_name)
+            if next_url:
+                return redirect(next_url)
+            else:
+                return redirect('SEreview:collection_list', collection_name=collection_name)
+            
     else:
         # Fill the form with data from the record to be updated
             # Fill the form with data from the record to be updated, except for desc_update
         initial_data = {k: v for k, v in item.items() if k != 'desc_update'}
         form = UpdateForm(initial=initial_data)
 
-    return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id})
+    return render(request, 'SEreview/update_item.html', {'form': form, 'item': item, 'collection_name': collection_name, 'item_id': item_id,'next_url': next_url})
 
 def group_data_by_month_timestamp(data):
     grouped_data = {}

@@ -37,6 +37,7 @@
    
     <div class="card-body">
         <form method="post" action="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}">
+            <input type="hidden" name="next_url" value="{{ next_url }}">
             {% csrf_token %}
             
             {% for field in form %}
