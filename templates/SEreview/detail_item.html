@@ -47,7 +47,8 @@
         </div>
     </div>
     <div class="card-body">
-        <form method="post" action="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}">
+        <form method="post" action="{% url 'SEreview:update_item' collection_name=collection_name item_id=item_id %}?next_url={{ request.path }}">
+            <input type="hidden" name="next_url" value="{{ next_url }}">
             {% csrf_token %}
             <button type="submit" class="btn btn-primary">Update</button>
         </form>

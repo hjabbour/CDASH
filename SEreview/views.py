@@ -515,6 +515,9 @@ def delete_item(request, collection_name, item_id):
 
     # Retrieve the collection based on the collection_name
     collection = db[collection_name]
+    
+     # Get the 'next' parameter from the GET request
+    next_url = request.GET.get('next_url', None)
 
     # Find the item to be "deleted"
     item = collection.find_one({'_id': ObjectId(item_id)})
@@ -525,10 +528,14 @@ def delete_item(request, collection_name, item_id):
             # Update the status of the item to "deleted"
             collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'status': 'deleted'}})
             #return HttpResponse('Item marked as deleted.')
-            return redirect('SEreview:collection_list', collection_name=collection_name)
+            if next_url:
+                return redirect(next_url)
+            else:
+                #return redirect('SEreview:collection_list', collection_name=collection_name)
+                return redirect('SEreview:collection_list', collection_name=collection_name)
         else:
-            #return HttpResponse('You do not have permission to delete this item.')
-            return redirect('SEreview:collection_list', collection_name=collection_name)
+            error_message = "Unauthorized to delete this item."
+            return redirect('SEreview:error_page_with_message', message=error_message)
     else:
         return redirect('SEreview:collection_list', collection_name=collection_name)
 
