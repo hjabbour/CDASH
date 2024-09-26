@@ -120,7 +120,8 @@
             {% endfor %}
             <tr class="unread">
               <td colspan="100%">
-                <a href="{% url 'SEreview:collection_list' form_name %}" class="label theme-bg text-white f-12">View All</a>
+                <!-- remove view all -->
+               <!--  <a href="{% url 'SEreview:collection_list' form_name %}" class="label theme-bg text-white f-12">View All</a> -->
               </td>
             </tr>
           </tbody>
@@ -171,8 +172,8 @@
     <button type="submit" class="btn btn-primary">Submit</button>
   </form>
 
-<!-- client_dash_template -->
- <!-- Debug: Output existing_initiatives to ensure it is passed correctly -->
+<!-- client_dash_template 
+Debug: Output existing_initiatives to ensure it is passed correctly
 {% if existing_initiatives %}
 <ul>
     {% for initiative in existing_initiatives %}
@@ -183,7 +184,6 @@
    
 <p>No existing initiatives found.</p>
 {% endif %}
- <!-- Debug: Output data as a list to ensure it is passed correctly -->
 {% if data %}
   <ul>
     {% for item in data %}
@@ -195,3 +195,4 @@
 {% endif %}
 
 {% endblock content %}
+-->

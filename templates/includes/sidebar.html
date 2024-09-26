@@ -55,12 +55,14 @@
         {% endif %}
 
         {% if  request.user.is_authenticated %}
+          
         <li
           data-username="SE review "
           class="nav-item pcoded-hasmenu">
           <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
                 class="feather icon-lock"></i></span><span class="pcoded-mtext">SE Review</span></a>
           <ul class="pcoded-submenu">
+            {% if request.user.is_superuser or request.user.groups.all.0.name == "SE" %}
             <li class=""><a href="{% url 'SEreview:client_centric' %}" class="">Client Centric</a></li>
             <li class=""><a href="{% url 'SEreview:clients' %}" class="">Clients</a></li>
             <li class=""><a href="{% url 'SEreview:forecasted_opportunity' %}" class="">Forecasted</a></li>
@@ -75,7 +77,7 @@
             <li class=""><a href="{% url 'SEreview:engineerstats' %}" class="">Cumulative Stats</a></li>
             <li class=""><a href="{% url 'SEreview:allstats' %}" class="">All Stats</a></li>
             <li class=""><a href="{% url 'SEreview:monthlystats' %}" class="">Range Stats</a></li>
-          
+            {% endif %}
             {% if  request.user.is_superuser %}
             <li class=""><a href="{% url 'SEreview:mweeklyreview' %}" class="">SEM View</a></li>
             {% endif %}
@@ -101,9 +103,12 @@
           <span class="pcoded-mtext">BE Planning</span>
         </a>
         <ul class="pcoded-submenu">
-          <li class=""><a href="{% url 'SEreview:client_centric_be' %}" class="">SE Client Centric</a></li>
+          {% if request.user.is_superuser or request.user.groups.all.0.name == "SE" %}
+          <li class=""><a href="{% url 'SEreview:client_centric_be' %}" class="">SE View / Client </a></li>
+           {% endif %}
+          
           <li class="pcoded-hasmenu">
-            <a href="javascript:" class="">BE Client Centric</a>
+            <a href="javascript:" class="">BE View / Client</a>
             <ul class="pcoded-submenu">
               <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='EN' %}" class="">NX</a></li>
               <li class=""><a href="{% url 'SEreview:client_centric_be_name' be_name='Sec' %}" class="">Security</a></li>
@@ -115,7 +120,7 @@
             </ul>
           </li>
           <li class="pcoded-hasmenu">
-    <a href="javascript:" class="">BE Centric</a>
+    <a href="javascript:" class="">BE view All clients</a>
     <ul class="pcoded-submenu">
         <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='EN' source='SE' %}" class="">NX</a></li>
         <li class=""><a href="{% url 'SEreview:be_dashboard_be' form_name='bestatus' be_name='Sec' source='SE' %}" class="">Security</a></li>

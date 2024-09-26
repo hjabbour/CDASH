@@ -34,7 +34,9 @@ import pandas as pd
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
-toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
+toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel']
+##toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
+
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
@@ -480,7 +482,7 @@ def collection_user(user_id, collection_name, client_name=None, superuser=False)
     if client_name:
         query['client_name'] = client_name
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 
@@ -491,7 +493,7 @@ def collection_client(collection_name, client_name=None, superuser=False):
     if client_name:
         query['client_name'] = client_name
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 def collection_client_be(collection_name, client_name=None, be_name=None, superuser=False):
@@ -504,7 +506,7 @@ def collection_client_be(collection_name, client_name=None, be_name=None, superu
     if be_name:
         query['be_name'] = be_name  # Add be_name to the query if it is provided
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 
@@ -667,6 +669,7 @@ def get_recent_updates():
 
 
 def stats_view(request, user_id=None):
+    ## here where we can land on different pages depending on the user 
     user_id = request.user.id
     user_first_name = "no firstname"
     # Retrieve the forecasted opportunities based on the user_id parameter
@@ -712,7 +715,8 @@ def is_user_superuser(user_id):
         return user.is_superuser
     except User.DoesNotExist:
         return False
-
+    
+@group_required(allowed_groups=['SE'])
 def weeklyreview(request,engineer_id=None):
     
     if engineer_id is not None:
