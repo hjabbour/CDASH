@@ -1901,3 +1901,83 @@ def be_dashboard_be(request, form_name=None, be_name=None, source=None):
             return render(request, 'SEreview/be_dashboard_be.html', context)
     
     return redirect('SEreview:error_page')
+
+
+## maybe seperate form from processing in the below
+
+# Define fixed bucket list
+BUCKET_LIST = [
+    "Results",
+    "Cisco Principles",
+    "Internal Projects",
+    "Year Objective",
+    "Ownership",
+    "Commitment to the SE team",
+    "Contribution to SE team",
+    "Punctuality",
+    "Education",
+    "Attitude",
+    "Proactivity",
+    "Visibility",
+    "Self Driven",
+    "Motivation"
+]
+
+@login_required
+def bucket_view(request, user_id):
+    collection = db['user_buckets']
+
+    # Fetch the user's evaluation data
+    user_data = collection.find_one({"user_id": user_id})
+
+    # If the user doesn't have all buckets, initialize them
+    if not user_data:
+        # Create initial entry for the user if none exists
+        user_data = {
+            "user_id": user_id,
+            "buckets": [{"bucket_name": bucket, "objectives": [], "mark": None, "comments": []} for bucket in BUCKET_LIST]
+        }
+        collection.insert_one(user_data)
+
+    # Ensure all buckets exist (in case new ones are added later)
+    existing_buckets = [b['bucket_name'] for b in user_data.get('buckets', [])]
+    for bucket in BUCKET_LIST:
+        if bucket not in existing_buckets:
+            collection.update_one(
+                {"user_id": user_id},
+                {"$push": {"buckets": {"bucket_name": bucket, "objectives": [], "mark": None, "comments": []}}}
+            )
+
+    # Handling the POST request for objectives, comments, and marks
+    if request.method == 'POST':
+        bucket_name = request.POST.get('bucket_name')
+        objective_text = request.POST.get('objective_text')
+        comment_text = request.POST.get('comment_text')
+        mark_score = request.POST.get('mark_score')
+
+        current_time = timezone.now()
+
+        # Add objective
+        if objective_text:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$push": {"buckets.$.objectives": {"text": objective_text, "timestamp": current_time}}}
+            )
+
+        # Add comment
+        if comment_text:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$push": {"buckets.$.comments": {"user_id": request.user.id, "text": comment_text, "timestamp": current_time}}}
+            )
+
+        # Superuser updates mark
+        if request.user.is_superuser and mark_score:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$set": {"buckets.$.mark": {"score": mark_score, "timestamp": current_time, "set_by": request.user.id}}}
+            )
+
+        return redirect('SEreview:bucket_view', user_id=user_id)
+
+    return render(request, 'SEreview/bucket_view.html', {'user_data': user_data, 'bucket_list': BUCKET_LIST})
