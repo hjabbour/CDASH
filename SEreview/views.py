@@ -12,8 +12,9 @@ from django.utils import timezone
 from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm 
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User 
 from django.http import HttpResponse ,HttpResponseNotFound
+from django.contrib.auth.models import User, Group
+
 
 
 from django.views.generic import CreateView
@@ -1924,6 +1925,7 @@ BUCKET_LIST = [
 ]
 
 @login_required
+@group_required(allowed_groups=['SE'])
 def bucket_view(request, user_id):
     collection = db['user_buckets']
 
@@ -1981,3 +1983,23 @@ def bucket_view(request, user_id):
         return redirect('SEreview:bucket_view', user_id=user_id)
 
     return render(request, 'SEreview/bucket_view.html', {'user_data': user_data, 'bucket_list': BUCKET_LIST})
+
+
+
+@group_required(allowed_groups=['SE'])
+def bucket_landing_page(request):
+    # Check if the logged-in user is a superuser
+    if request.user.is_superuser:
+        # Fetch all users in the "SE" group
+        se_group = Group.objects.get(name='SE')
+        se_users = se_group.user_set.all()
+
+        # Render a list of all users in "SE" with links to their bucket views
+        return render(request, 'SEreview/bucket_landing_page.html', {
+            'se_users': se_users,
+            'is_superuser': True
+        })
+    else:
+        # Regular user, redirect to their own bucket_view
+        return redirect('SEreview:bucket_view', user_id=request.user.id)
+

@@ -43,6 +43,7 @@ urlpatterns = [
     path('process_dash_be/<str:form_name>/', views.process_dash_be, name='process_dash_be'),
     path('be_dashboard_be/<str:form_name>/<str:be_name>/<str:source>/', views.be_dashboard_be, name='be_dashboard_be'),
     path('bucket_view/<int:user_id>/', views.bucket_view, name='bucket_view'),
-     path('bucket_view/', views.bucket_view, name='bucket_view'),
+    path('bucket_view/', views.bucket_view, name='bucket_view'),
+    path('bucket_landing/', views.bucket_landing_page, name='bucket_landing_page')
 
 ]

@@ -1,27 +1,23 @@
-
 # Create your views here.
 # 2023 Haytham Jabbour hjabbour
 from django.shortcuts import render, redirect
 from pymongo import MongoClient
 import pandas as pd
 from .forms import UploadCSVForm
-#from .forms import UploadCSVForm
 from .models import UploadedFile
 from django.conf import settings
 from django.http import HttpResponse
 from pptx import Presentation
 import json
 from bson import json_util
+import csv
+import os
+from django.contrib.auth.models import User, Group  # Import Group model
 
-
-#from pandas_datareader import data
-from datetime import date
+# Existing MongoDB connection
 client = MongoClient('mongodb://root:rootpassword@192.168.2.152:27017')
 db = client['CDASH']
 collection = db['csvdash']
-
-import os
-
 
 def delete_files(request):
     if request.method == 'POST':
@@ -40,8 +36,6 @@ def delete_files(request):
         return redirect('csv_processor:file_list')
     return render(request, 'csv_processor/file_list.html')
 
-
-
 def upload_csv(request):
     if request.method == 'POST':
         form = UploadCSVForm(request.POST, request.FILES)
@@ -52,6 +46,12 @@ def upload_csv(request):
             uploaded_file = UploadedFile(csv_file=csv_file)
             uploaded_file.save()
 
+            # Save the file to a temporary location
+            file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', csv_file.name)
+            with open(file_path, 'wb+') as destination:
+                for chunk in csv_file.chunks():
+                    destination.write(chunk)
+
             # Redirect to the file list view on successful upload
             return redirect('csv_processor:file_list')
     else:
@@ -61,7 +61,6 @@ def upload_csv(request):
         'form': form
     }
     return render(request, 'csv_processor/upload_csv.html', context)
-
 
 def file_list(request):
     # Get the list of files in the csv_files folder
@@ -85,15 +84,12 @@ def file_detail(request, filename):
     }
     return render(request, 'csv_processor/file_detail.html', context)
 
-
-
 def file_columns(request, filename):
     file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
     # Code to read the CSV file and extract the column names
     # You can use the csv module or pandas to read the file and extract the columns
     
     # Example using pandas:
-    import pandas as pd
     df = pd.read_csv(file_path)
     columns = df.columns.tolist()
     
@@ -105,8 +101,7 @@ def file_columns(request, filename):
     }
     return render(request, 'csv_processor/file_columns.html', context)
 
-
-def process_columns(request,filename):
+def process_columns(request, filename):
     if request.method == 'POST':
         
         # Retrieve selected columns from the form data
@@ -114,26 +109,17 @@ def process_columns(request,filename):
         selected_file = request.POST.get('filename')
         file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
         df = pd.read_csv(file_path)
-        new_df=df[selected_columns]
+        new_df = df[selected_columns]
         
         context = {
-        'filename': filename,
-        'selected_file': filename,
-        'columns': selected_columns,
-        'df':new_df,
-    
-    }
+            'filename': filename,
+            'selected_file': filename,
+            'columns': selected_columns,
+            'df': new_df,
+        }
         
-    return render(request, 'csv_processor/new_columns.html', context)
+        return render(request, 'csv_processor/new_columns.html', context)
 
-        # Process the selected columns
-        # ...
-
-        # Return an appropriate response, such as a redirect or a success message
-
-
-    # Process the selected columns as needed (insert into MongoDB or return as pandas dataframe)
-    #
 def process_ppt(request):
     if request.method == 'POST':
         ppt_file = request.FILES['ppt_file']
@@ -160,7 +146,6 @@ def process_ppt(request):
 
     return render(request, 'ppt_processor/upload_ppt.html')
 
-## fix this its not inserting 
 def insert_into_mongodb(request):
     if request.method == 'POST':
         filename = request.POST['filename']
@@ -168,33 +153,51 @@ def insert_into_mongodb(request):
         file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
         df = pd.read_csv(file_path)
         new_df = df[selected_columns]
-        
-        
+
         client = MongoClient('mongodb://root:password@192.168.2.152:27017')
         db = client['CDASH']
         collection = db['csvdash']
-        # Convert DataFrame to JSON
-        #df_json = df.to_json(orient='records')
-        
-        # Connect to MongoDB
-        #client = MongoClient('mongodb://localhost:27017/')
-        #db = client['your_database_name']
-        #collection = db['your_collection_name']
-        
-        # Insert JSON data into MongoDB
-        #json_data = json.loads(df_json)
         
         data_dict = df.to_dict("records")
-        result=collection.insert_many(data_dict)
+        result = collection.insert_many(data_dict)
       
         if result:
-             return render(request,'csv_processor/success.html')
+            return render(request, 'csv_processor/success.html')
         else:
-             return render(request,'csv_processor/error.html')
-        #client.close()
-        
-        # Redirect to a success page or another URL
-        return render(request,'csv_processor/success.html')
-    
-    # Handle GET request or invalid form submission
-    return render(request,'csv_processor/error.html')
+            return render(request, 'csv_processor/error.html')
+
+    return render(request, 'csv_processor/error.html')
+
+def import_users_from_csv(file_path):
+    with open(file_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            username = row['Username']
+            password = row['Password']
+            email = row.get('Email', f'{username}@example.com')
+            first_name = row.get('Name', '').split()[0]
+            last_name = ' '.join(row.get('Name', '').split()[1:])
+            group_name = row['Group']  # Read the Group column
+
+            # Get or create the group
+            group, created = Group.objects.get_or_create(name=group_name)
+
+            if not User.objects.filter(username=username).exists():
+                user = User(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                user.set_password(password)  # Hash the password
+                user.save()
+                user.groups.add(group)  # Assign the user to the group
+
+def import_users(request):
+    if request.method == 'POST':
+        filename = request.POST.get('filename')
+        if filename:
+            file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
+            import_users_from_csv(file_path)
+            return redirect('csv_processor:file_list')
+    return render(request, 'csv_processor/file_list.html')

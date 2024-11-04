@@ -4,8 +4,10 @@
 
 <ul>
   {% for file in files %}
-  <li><a href="{% url 'csv_processor:file_columns' filename=file %}">Edit {{ file }}</a></li>
-  <li><a href="{% url 'csv_processor:file_detail' filename=file %}">view  {{ file }}</a></li>
+  <li>
+    <a href="{% url 'csv_processor:file_columns' filename=file %}">Edit {{ file }}</a>
+    <a href="{% url 'csv_processor:file_detail' filename=file %}">view  {{ file }}</a>
+  </li>
   {% endfor %}
 </ul>
 
@@ -23,6 +25,12 @@
       <tr>
         <td><input type="checkbox" name="selected_files" value="{{ file }}"></td>
         <td>{{ file }}</td>
+        <td>
+          <form method="POST" action="{% url 'csv_processor:import_users' %}">
+            {% csrf_token %}
+            <button type="submit" name="filename" value="{{ file }}" class="btn btn-primary">Import Users</button>
+          </form>
+        </td>
       </tr>
       {% endfor %}
     </tbody>

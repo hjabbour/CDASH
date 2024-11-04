@@ -1,0 +1,22 @@
+{% extends 'layouts/base.html' %}
+
+
+{% block content %}
+    <h1>Bucket Landing Page</h1>
+
+    {% if is_superuser %}
+        <h2>All Users in SE Group</h2>
+        <ul>
+            {% for user in se_users %}
+                <li>
+                    <a href="{% url 'SEreview:bucket_view' user_id=user.id %}">{{ user.username }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <h2>Your Bucket View</h2>
+        <p>
+            <a href="{% url 'SEreview:bucket_view' user_id=user.id %}">{{ user.username }}</a>
+        </p>
+    {% endif %}
+{% endblock %}
