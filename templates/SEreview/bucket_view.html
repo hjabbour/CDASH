@@ -1,0 +1,109 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+    <!-- Bucket Evaluation Section -->
+    <div class="col-xl-10 col-md-6">
+        <div class="card Recent-Users">
+            <div class="card-header">
+                <h5>Bucket Evaluation Form</h5>
+            </div>
+            <div class="card-block px-0 py-3">
+                <!-- Form Start -->
+                <form method="POST" action="{% url 'SEreview:bucket_view' user_data.user_id %}">
+                    {% csrf_token %}
+
+                    <table class="table table-hover">
+                        <tr>
+                            <td><label for="bucket_name">Bucket</label></td>
+                            <td>
+                                <select name="bucket_name" class="form-control">
+                                    {% for bucket in bucket_list %}
+                                        <option value="{{ bucket }}">{{ bucket }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label for="objective_text">Add Objective</label></td>
+                            <td>
+                                <input type="text" name="objective_text" placeholder="Objective" class="form-control">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><label for="comment_text">Add Comment</label></td>
+                            <td>
+                                <textarea name="comment_text" placeholder="Comment" class="form-control"></textarea>
+                            </td>
+                        </tr>
+
+                        {% if request.user.is_superuser %}
+                        <tr>
+                            <td><label for="mark_score">Set/Update Mark (Superuser Only)</label></td>
+                            <td>
+                                <input type="number" name="mark_score" min="0" max="10" placeholder="Score" class="form-control">
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </table>
+
+                    <div class="text-right">
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </div>
+                </form>
+                <!-- Form End -->
+            </div>
+        </div>
+
+        <!-- Bucket Evaluations Section -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Bucket Evaluations</h5>
+            </div>
+            <div class="card-block px-0 py-3">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Bucket</th>
+                                <th>Objectives</th>
+                                <th>Mark</th>
+                                <th>Comments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for bucket in user_data.buckets %}
+                            <tr class="unread">
+                                <td>
+                                    <strong>{{ bucket.bucket_name }}</strong>
+                                </td>
+                                <td>
+                                    <ul>
+                                        {% for objective in bucket.objectives %}
+                                            <li>{{ objective.text }} ({{ objective.timestamp }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                                <td>
+                                    {% if bucket.mark %}
+                                        {{ bucket.mark.score }} ({{ bucket.mark.timestamp }}) set by user {{ bucket.mark.set_by }}
+                                    {% else %}
+                                        Not set
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <ul>
+                                        {% for comment in bucket.comments %}
+                                            <li>{{ comment.text }} by User {{ comment.user_id }} ({{ comment.timestamp }})</li>
+                                        {% endfor %}
+                                    </ul>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}
