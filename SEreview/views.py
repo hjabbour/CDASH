@@ -12,8 +12,9 @@ from django.utils import timezone
 from admin_datta.forms import RegistrationForm, LoginForm, UserPasswordChangeForm, UserPasswordResetForm, UserSetPasswordForm 
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetConfirmView, PasswordResetView
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User 
 from django.http import HttpResponse ,HttpResponseNotFound
+from django.contrib.auth.models import User, Group
+
 
 
 from django.views.generic import CreateView
@@ -34,7 +35,9 @@ import pandas as pd
 
 ## remove status list from collection_user and put toupdatelist
 statuslist = ['Planned','Active','Delayed']
-toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
+toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel']
+##toupdatelist = ['Planned','Active','Delayed','Monitoring','Engaged','Initial','Followup','Funnel','Completed']
+
 fields_to_display = {
         'forecasted_opportunity': ['Client/Status', 'Creation Date','Update', 'Pending','Action'],
         'funnel_opportunity': ['Client/Status', 'Creatiion Date','Update', 'Pending','Action'],
@@ -480,7 +483,7 @@ def collection_user(user_id, collection_name, client_name=None, superuser=False)
     if client_name:
         query['client_name'] = client_name
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 
@@ -491,7 +494,7 @@ def collection_client(collection_name, client_name=None, superuser=False):
     if client_name:
         query['client_name'] = client_name
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 def collection_client_be(collection_name, client_name=None, be_name=None, superuser=False):
@@ -504,7 +507,7 @@ def collection_client_be(collection_name, client_name=None, be_name=None, superu
     if be_name:
         query['be_name'] = be_name  # Add be_name to the query if it is provided
 
-    data = collection.find(query)
+    data = collection.find(query).sort('desc_update.timestamp', -1)
     return data
 
 
@@ -515,6 +518,9 @@ def delete_item(request, collection_name, item_id):
 
     # Retrieve the collection based on the collection_name
     collection = db[collection_name]
+    
+     # Get the 'next' parameter from the GET request
+    next_url = request.GET.get('next_url', None)
 
     # Find the item to be "deleted"
     item = collection.find_one({'_id': ObjectId(item_id)})
@@ -525,10 +531,14 @@ def delete_item(request, collection_name, item_id):
             # Update the status of the item to "deleted"
             collection.update_one({'_id': ObjectId(item_id)}, {'$set': {'status': 'deleted'}})
             #return HttpResponse('Item marked as deleted.')
-            return redirect('SEreview:collection_list', collection_name=collection_name)
+            if next_url:
+                return redirect(next_url)
+            else:
+                #return redirect('SEreview:collection_list', collection_name=collection_name)
+                return redirect('SEreview:collection_list', collection_name=collection_name)
         else:
-            #return HttpResponse('You do not have permission to delete this item.')
-            return redirect('SEreview:collection_list', collection_name=collection_name)
+            error_message = "Unauthorized to delete this item."
+            return redirect('SEreview:error_page_with_message', message=error_message)
     else:
         return redirect('SEreview:collection_list', collection_name=collection_name)
 
@@ -660,6 +670,7 @@ def get_recent_updates():
 
 
 def stats_view(request, user_id=None):
+    ## here where we can land on different pages depending on the user 
     user_id = request.user.id
     user_first_name = "no firstname"
     # Retrieve the forecasted opportunities based on the user_id parameter
@@ -705,7 +716,8 @@ def is_user_superuser(user_id):
         return user.is_superuser
     except User.DoesNotExist:
         return False
-
+    
+@group_required(allowed_groups=['SE'])
 def weeklyreview(request,engineer_id=None):
     
     if engineer_id is not None:
@@ -1890,3 +1902,104 @@ def be_dashboard_be(request, form_name=None, be_name=None, source=None):
             return render(request, 'SEreview/be_dashboard_be.html', context)
     
     return redirect('SEreview:error_page')
+
+
+## maybe seperate form from processing in the below
+
+# Define fixed bucket list
+BUCKET_LIST = [
+    "Results",
+    "Cisco Principles",
+    "Internal Projects",
+    "Year Objective",
+    "Ownership",
+    "Commitment to the SE team",
+    "Contribution to SE team",
+    "Punctuality",
+    "Education",
+    "Attitude",
+    "Proactivity",
+    "Visibility",
+    "Self Driven",
+    "Motivation"
+]
+
+@login_required
+@group_required(allowed_groups=['SE'])
+def bucket_view(request, user_id):
+    collection = db['user_buckets']
+
+    # Fetch the user's evaluation data
+    user_data = collection.find_one({"user_id": user_id})
+
+    # If the user doesn't have all buckets, initialize them
+    if not user_data:
+        # Create initial entry for the user if none exists
+        user_data = {
+            "user_id": user_id,
+            "buckets": [{"bucket_name": bucket, "objectives": [], "mark": None, "comments": []} for bucket in BUCKET_LIST]
+        }
+        collection.insert_one(user_data)
+
+    # Ensure all buckets exist (in case new ones are added later)
+    existing_buckets = [b['bucket_name'] for b in user_data.get('buckets', [])]
+    for bucket in BUCKET_LIST:
+        if bucket not in existing_buckets:
+            collection.update_one(
+                {"user_id": user_id},
+                {"$push": {"buckets": {"bucket_name": bucket, "objectives": [], "mark": None, "comments": []}}}
+            )
+
+    # Handling the POST request for objectives, comments, and marks
+    if request.method == 'POST':
+        bucket_name = request.POST.get('bucket_name')
+        objective_text = request.POST.get('objective_text')
+        comment_text = request.POST.get('comment_text')
+        mark_score = request.POST.get('mark_score')
+
+        current_time = timezone.now()
+
+        # Add objective
+        if objective_text:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$push": {"buckets.$.objectives": {"text": objective_text, "timestamp": current_time}}}
+            )
+
+        # Add comment
+        if comment_text:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$push": {"buckets.$.comments": {"user_id": request.user.id, "text": comment_text, "timestamp": current_time}}}
+            )
+
+        # Superuser updates mark
+        if request.user.is_superuser and mark_score:
+            collection.update_one(
+                {"user_id": user_id, "buckets.bucket_name": bucket_name},
+                {"$set": {"buckets.$.mark": {"score": mark_score, "timestamp": current_time, "set_by": request.user.id}}}
+            )
+
+        return redirect('SEreview:bucket_view', user_id=user_id)
+
+    return render(request, 'SEreview/bucket_view.html', {'user_data': user_data, 'bucket_list': BUCKET_LIST})
+
+
+
+@group_required(allowed_groups=['SE'])
+def bucket_landing_page(request):
+    # Check if the logged-in user is a superuser
+    if request.user.is_superuser:
+        # Fetch all users in the "SE" group
+        se_group = Group.objects.get(name='SE')
+        se_users = se_group.user_set.all()
+
+        # Render a list of all users in "SE" with links to their bucket views
+        return render(request, 'SEreview/bucket_landing_page.html', {
+            'se_users': se_users,
+            'is_superuser': True
+        })
+    else:
+        # Regular user, redirect to their own bucket_view
+        return redirect('SEreview:bucket_view', user_id=request.user.id)
+
