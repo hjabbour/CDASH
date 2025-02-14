@@ -19,6 +19,13 @@ load_dotenv()  # take environment variables from .env.
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+## webex access bot toke
+# Try to get the Webex token from the system environment first
+# Try to get the Webex Access Token
+WEBEX_ACCESS_TOKEN = os.getenv("WEBEX_ACCESS_TOKEN")
+
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
 
@@ -54,6 +61,7 @@ INSTALLED_APPS = [
     "home",
     "csv_processor",
     "SEreview",
+    "messaging"
 ]
 
 MIDDLEWARE = [

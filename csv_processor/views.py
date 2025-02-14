@@ -198,3 +198,38 @@ def insert_into_mongodb(request):
     
     # Handle GET request or invalid form submission
     return render(request,'csv_processor/error.html')
+
+
+def import_users_from_csv(file_path):
+    with open(file_path, mode='r') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            username = row['Username']
+            password = row['Password']
+            email = row.get('Email', f'{username}@example.com')
+            first_name = row.get('Name', '').split()[0]
+            last_name = ' '.join(row.get('Name', '').split()[1:])
+            group_name = row['Group']  # Read the Group column
+
+            # Get or create the group
+            group, created = Group.objects.get_or_create(name=group_name)
+
+            if not User.objects.filter(username=username).exists():
+                user = User(
+                    username=username,
+                    email=email,
+                    first_name=first_name,
+                    last_name=last_name
+                )
+                user.set_password(password)  # Hash the password
+                user.save()
+                user.groups.add(group)  # Assign the user to the group
+
+def import_users(request):
+    if request.method == 'POST':
+        filename = request.POST.get('filename')
+        if filename:
+            file_path = os.path.join(settings.MEDIA_ROOT, 'csv_files', filename)
+            import_users_from_csv(file_path)
+            return redirect('csv_processor:file_list')
+    return render(request, 'csv_processor/file_list.html')

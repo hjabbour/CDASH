@@ -22,5 +22,6 @@ urlpatterns = [
     path("", include('admin_datta.urls')),
     path('csv_processor/', include('csv_processor.urls')),
     path('SEreview/', include('SEreview.urls')),
+    path('messaging/', include('messaging.urls')),
     
 ]

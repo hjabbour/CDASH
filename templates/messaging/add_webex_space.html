@@ -1,0 +1,39 @@
+{% extends 'layouts/base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Add Webex Space</h2>
+
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.as_p }}
+        </div>
+        <button type="submit" class="btn btn-primary">Add Space</button>
+    </form>
+
+    <h3>Existing Spaces</h3>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Space Name</th>
+                <th>Space ID</th>
+                <th>Group</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for space in existing_spaces %}
+            <tr>
+                <td>{{ space.space_name }}</td>
+                <td>{{ space.space_id }}</td>
+                <td>{{ space.group }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="3" class="text-center">No spaces added yet.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
