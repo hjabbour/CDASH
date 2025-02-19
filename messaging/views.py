@@ -6,7 +6,7 @@ from .forms import sWebexMessageForm ,WebexSpaceForm,WebexMessageForm,BEActivity
 from SEreview.conn import get_mongodb_connection  # Correct import for another app
 from django.contrib.auth.decorators import user_passes_test
 # from .utils import send_message, send_table_message, send_adaptive_card, send_markdown_message, generate_beactivity_report, send_to_webex
-from .utils import  send_to_webex ,be_activity_report,be_activity_report_detailed,be_metrics_report
+from .utils import  send_to_webex ,be_activity_report,be_activity_report_detailed,be_metrics_report,send_to_webex_tables
 
 import json  # For parsing JSON data
 import pandas as pd  # For working with Pandas DataFrames
@@ -132,6 +132,42 @@ def send_mwebex_message(request):
 
 
 
+# def be_activity_report_view(request):
+#     if request.method == "POST":
+#         form = BEActivityReportForm(request.POST)
+#         if form.is_valid():
+#             be_name = form.cleaned_data["be_name"]
+#             space_id = form.cleaned_data["space_id"]
+#             status_filter = form.cleaned_data["status_filter"]
+#             exclude_status = form.cleaned_data["exclude_status"]
+#             pending_filter = form.cleaned_data["pending_filter"]
+#             months = form.cleaned_data["months"]
+
+#             # Generate the report
+#             # report_text = be_metrics_report(
+#             # #report_text = generate_beactivity_report_dct(
+
+#             #     be_name, status_filter, exclude_status, pending_filter, months
+#             # )
+#             report_text=be_metrics_report(be_name,months)
+
+#             if report_text:
+#                 send_to_webex(space_id, report_text)
+#                 #send_adaptive_card(report_text,recipient_email=None,space_id=space_id)
+#                 #send_table_message(report_text,recipient_email=None,space_id=space_id)
+                
+#                 messages.success(request, "Report sent successfully to Webex!")
+#             else:
+#                 messages.warning(request, "No data found for the selected filters.")
+
+#             return redirect("be_activity_report")
+
+#     else:
+#         form = BEActivityReportForm()
+
+#     return render(request, "messaging/be_activity_report.html", {"form": form})
+
+
 def be_activity_report_view(request):
     if request.method == "POST":
         form = BEActivityReportForm(request.POST)
@@ -143,20 +179,24 @@ def be_activity_report_view(request):
             pending_filter = form.cleaned_data["pending_filter"]
             months = form.cleaned_data["months"]
 
-            # Generate the report
-            # report_text = be_metrics_report(
-            # #report_text = generate_beactivity_report_dct(
+            # Generate all reports
+            activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
+            detailed_report = be_activity_report_detailed(be_name, status_filter, exclude_status, pending_filter, months)
+            metrics_report = be_metrics_report(be_name, months)
 
-            #     be_name, status_filter, exclude_status, pending_filter, months
-            # )
-            report_text=be_metrics_report(be_name,months)
+            # Collect all non-empty reports
+            reports = {
+                "Activity Report": activity_report,
+                #"Detailed Activity Report": detailed_report,
+                "Metrics Report": metrics_report,
+            }
+            reports_to_send = {name: report for name, report in reports.items() if report}
 
-            if report_text:
-                send_to_webex(space_id, report_text)
-                #send_adaptive_card(report_text,recipient_email=None,space_id=space_id)
-                #send_table_message(report_text,recipient_email=None,space_id=space_id)
+            if reports_to_send:
+                for report_name, report_text in reports_to_send.items():
+                    send_to_webex(space_id, f"**{report_name}**\n{report_text}")
                 
-                messages.success(request, "Report sent successfully to Webex!")
+                messages.success(request, "All reports sent successfully to Webex!")
             else:
                 messages.warning(request, "No data found for the selected filters.")
 

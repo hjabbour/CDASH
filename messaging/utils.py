@@ -5,6 +5,13 @@ from dotenv import load_dotenv
 from SEreview.conn import get_mongodb_connection  # Correct import for another app
 from datetime import datetime,timedelta
 import requests
+from collections import Counter
+from django.contrib.auth.models import User
+from datetime import datetime, timedelta
+
+WEBEX_MAX_LENGTH = 7400  # Webex's message length limit before encryption
+WEBEX_TABLE_ROWS = 40  # Limit table chunks to 40 rows
+
 
 
 
@@ -34,25 +41,25 @@ db["beactivity"].create_index([("desc_update.timestamp", 1)])
 
 
 # Webex sending function
-def send_to_webex(space_id, message):
-    url = "https://webexapis.com/v1/messages"
-    headers = {
-        "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    data = {"roomId": space_id, "markdown": message}
+# def send_to_webex(space_id, message):
+#     url = "https://webexapis.com/v1/messages"
+#     headers = {
+#         "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
+#         "Content-Type": "application/json",
+#     }
+#     data = {"roomId": space_id, "markdown": message}
     
-    try:
-        response = requests.post(url, json=data, headers=headers)
-        if response.status_code == 200:
-            print(f"Message successfully sent to Webex space {space_id}")
-            return True
-        else:
-            print(f"Failed to send message to Webex. Status code: {response.status_code}, Error: {response.text}")
-            return False
-    except Exception as e:
-        print(f"Error sending message to Webex: {e}")
-        return False
+#     try:
+#         response = requests.post(url, json=data, headers=headers)
+#         if response.status_code == 200:
+#             print(f"Message successfully sent to Webex space {space_id}")
+#             return True
+#         else:
+#             print(f"Failed to send message to Webex. Status code: {response.status_code}, Error: {response.text}")
+#             return False
+#     except Exception as e:
+#         print(f"Error sending message to Webex: {e}")
+#         return False
 
 
 # Fiscal quarter calculation
@@ -66,12 +73,66 @@ def get_fiscal_quarter(date):
         return f"FY{year+1} Q3"
     return f"FY{year+1} Q4"
 
+# send to webex with chunks 
+def send_to_webex(space_id, message):
+    url = "https://webexapis.com/v1/messages"
+    headers = {
+        "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
+        "Content-Type": "application/json",
+    }
 
-# BE Activity Report (Basic)
+    # Split long messages into chunks
+    for i in range(0, len(message), WEBEX_MAX_LENGTH):
+        chunk = message[i : i + WEBEX_MAX_LENGTH]
+        data = {"roomId": space_id, "markdown": chunk}
+        
+        try:
+            response = requests.post(url, json=data, headers=headers)
+            if response.status_code == 200:
+                print(f"Chunk sent successfully to Webex space {space_id}")
+            else:
+                print(f"Failed to send chunk. Status code: {response.status_code}, Error: {response.text}")
+                return False
+        except Exception as e:
+            print(f"Error sending message to Webex: {e}")
+            return False
+
+# Send formatted table data to Webex, chunking while keeping headers
+def send_to_webex_tables(space_id, table_lines):
+    url = "https://webexapis.com/v1/messages"
+    headers = {
+        "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    header, separator, *rows = table_lines
+
+    for i in range(0, len(rows), WEBEX_TABLE_ROWS):
+        chunk = [header, separator] + rows[i : i + WEBEX_TABLE_ROWS]
+        message = "```\n" + "\n".join(chunk) + "\n```"
+
+        try:
+            response = requests.post(url, json={"roomId": space_id, "markdown": message}, headers=headers)
+            if response.status_code == 200:
+                print(f"Table chunk sent successfully to Webex space {space_id}")
+            else:
+                print(f"Failed to send table chunk. Status code: {response.status_code}, Error: {response.text}")
+                return False
+        except Exception as e:
+            print(f"Error sending table chunk to Webex: {e}")
+            return False
+
+
+
+
+
+
 def be_activity_report(be_name, status_filter=None, exclude_status=None, pending_filter=None, months=None):
+    # Query the MongoDB collection for activities related to the Business Entity
     collection = db["beactivity"]
     query = {"be_name": be_name}
 
+    # Apply optional filters to the query
     if status_filter:
         query["status"] = {"$in": status_filter}
     if exclude_status:
@@ -81,22 +142,118 @@ def be_activity_report(be_name, status_filter=None, exclude_status=None, pending
     if months:
         query["desc_update.timestamp"] = {"$gte": datetime.utcnow() - timedelta(days=30 * months)}
 
+    # Fetch the activities from the collection
     activities = list(collection.find(query))
+
+    # If no activities found, return a message
     if not activities:
-        return None
+        return "No data available."
 
-    report_lines = [f"**BE Activity Report for {be_name}**\n"]
+    # Define column headers for the Markdown table
+    headers = ["Activity", "Client", "Status", "Pending", "Created On", "Last Updated"]
+
+    # Prepare data rows for the table
+    rows = []
     for activity in activities:
+        # Format create_date and last_update
         create_date = activity.get("create_date", "N/A")
+        create_date = create_date.strftime("%Y-%m-%d") if isinstance(create_date, datetime) else create_date
+
         last_update = max((entry.get('timestamp', "N/A") for entry in activity.get("desc_update", [])), default="N/A")
+        last_update = last_update.strftime("%Y-%m-%d") if isinstance(last_update, datetime) else last_update
 
-        report_lines.append(
-            f"- **{activity.get('activity_name', 'Unknown')}** (Client: {activity.get('client_name', 'N/A')}, "
-            f"Status: {activity.get('status', 'N/A')}, Pending: {activity.get('pending', 'N/A')}, "
-            f"Created: {create_date}, Last Updated: {last_update})"
-        )
+        # Check if last_update is older than a month and highlight it
+        last_update_date = datetime.strptime(last_update, "%Y-%m-%d") if last_update != "N/A" else None
+        if last_update_date and (datetime.utcnow() - last_update_date > timedelta(days=45)):
+            last_update = f"{last_update}(!)"
 
-    return "\n".join(report_lines)
+        # Prepare row data
+        row = [
+            activity.get("activity_name", "Unknown"),
+            activity.get("client_name", "N/A"),
+            activity.get("status", "N/A"),
+            activity.get("pending", "N/A"),
+            create_date,
+            last_update
+        ]
+        rows.append(row)
+
+    # Dynamically calculate column widths based on the maximum length of data in each column
+    col_widths = [max(len(str(row[i])) for row in [headers] + rows) for i in range(len(headers))]
+
+    # Function to format each row with the appropriate column width
+    def format_row(row):
+        return " | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(headers)))
+
+    # Generate the Markdown table
+    report_lines = []
+    report_lines.append(format_row(headers))  # Add headers
+    report_lines.append("-+-".join("-" * w for w in col_widths))  # Separator line
+    report_lines.extend(format_row(row) for row in rows)  # Add the rows
+
+    # Return the formatted report within a code block
+    return "```\n" + "\n".join(report_lines) + "\n```"
+
+# def be_activity_report(be_name, status_filter=None, exclude_status=None, pending_filter=None, months=None):
+#     collection = db["beactivity"]
+#     query = {"be_name": be_name}
+
+#     if status_filter:
+#         query["status"] = {"$in": status_filter}
+#     if exclude_status:
+#         query["status"] = {"$nin": exclude_status}
+#     if pending_filter:
+#         query["pending"] = {"$in": pending_filter}
+#     if months:
+#         query["desc_update.timestamp"] = {"$gte": datetime.utcnow() - timedelta(days=30 * months)}
+
+#     activities = list(collection.find(query))
+
+#     if not activities:
+#         return "No data available."
+
+#     headers = ["Activity", "Client", "Status", "Pending", "Created On", "Last Updated"]
+#     rows = []
+
+#     for activity in activities[:20]:  # Limit to 20 rows to prevent overflow
+#         create_date = activity.get("create_date", "N/A")
+#         create_date = create_date.strftime("%Y-%m-%d") if isinstance(create_date, datetime) else create_date
+
+#         last_update = max((entry.get('timestamp', "N/A") for entry in activity.get("desc_update", [])), default="N/A")
+#         last_update = last_update.strftime("%Y-%m-%d") if isinstance(last_update, datetime) else last_update
+
+#         last_update_date = datetime.strptime(last_update, "%Y-%m-%d") if last_update != "N/A" else None
+#         if last_update_date and (datetime.utcnow() - last_update_date > timedelta(days=45)):
+#             last_update = f"{last_update}(!)"
+
+#         row = [
+#             activity.get("activity_name", "Unknown"),
+#             activity.get("client_name", "N/A"),
+#             activity.get("status", "N/A"),
+#             activity.get("pending", "N/A"),
+#             create_date,
+#             last_update
+#         ]
+#         rows.append(row)
+
+#     col_widths = [max(len(str(row[i])) for row in [headers] + rows) for i in range(len(headers))]
+
+#     def format_row(row):
+#         return "| " + " | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(headers))) + " |"
+
+#     report_lines = []
+#     report_lines.append(format_row(headers))
+#     report_lines.append("|" + "|".join("-" * (col_widths[i] + 2) for i in range(len(headers))) + "|")
+#     report_lines.extend(format_row(row) for row in rows)
+
+#     markdown_report = "```\n" + "\n".join(report_lines) + "\n```"
+
+#     return markdown_report
+
+
+
+
+
 
 
 # BE Activity Report (Detailed & Styled)
@@ -141,9 +298,7 @@ def be_activity_report_detailed(be_name, status_filter=None, exclude_status=None
 # BE Metrics Report
 
 
-from collections import Counter
-from django.contrib.auth.models import User
-from datetime import datetime, timedelta
+
 
 def be_metrics_report(be_name, months=None):
     collection = db["beactivity"]
