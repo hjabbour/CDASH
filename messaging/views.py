@@ -6,7 +6,7 @@ from .forms import sWebexMessageForm ,WebexSpaceForm,WebexMessageForm,BEActivity
 from SEreview.conn import get_mongodb_connection  # Correct import for another app
 from django.contrib.auth.decorators import user_passes_test
 # from .utils import send_message, send_table_message, send_adaptive_card, send_markdown_message, generate_beactivity_report, send_to_webex
-from .utils import  send_to_webex ,be_activity_report,be_activity_report_detailed,be_metrics_report,send_to_webex_tables
+from .utils import  send_to_webex ,be_activity_report,be_activity_report_detailed,be_metrics_report,send_table_to_webex,combined_be_report,combined_be_initiative_report
 
 import json  # For parsing JSON data
 import pandas as pd  # For working with Pandas DataFrames
@@ -180,21 +180,26 @@ def be_activity_report_view(request):
             months = form.cleaned_data["months"]
 
             # Generate all reports
-            activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
+            #activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
             detailed_report = be_activity_report_detailed(be_name, status_filter, exclude_status, pending_filter, months)
-            metrics_report = be_metrics_report(be_name, months)
+            initiative_report = combined_be_initiative_report(be_name, months)
+            combined_report = combined_be_report(be_name,months)
 
             # Collect all non-empty reports
             reports = {
-                "Activity Report": activity_report,
+                #"Activity Report": activity_report,
                 #"Detailed Activity Report": detailed_report,
-                "Metrics Report": metrics_report,
+                "Initiative Report": initiative_report,
+                "Metric detail Report": combined_report,
+                
             }
             reports_to_send = {name: report for name, report in reports.items() if report}
 
             if reports_to_send:
                 for report_name, report_text in reports_to_send.items():
-                    send_to_webex(space_id, f"**{report_name}**\n{report_text}")
+                    #send_table_to_webex(space_id, f"**{report_name} {be_name}**\n{report_text}")
+                    send_to_webex(space_id, f"**{report_name} {be_name}**\n{report_text}")
+
                 
                 messages.success(request, "All reports sent successfully to Webex!")
             else:

@@ -38,28 +38,34 @@ api = WebexTeamsAPI(access_token=WEBEX_ACCESS_TOKEN)
 
 db["beactivity"].create_index([("desc_update.timestamp", 1)])
 
+# def format_status_with_emoji(status):
+#     status = status.lower()
+#     if status == "completed": return "✅ Completed"
+#     if status == "in progress": return "🔄 In Progress"
+#     if status == "blocked": return "🚫 Blocked"
+#     if status == "followup": return "⏳ followup"
+#     return status
 
-
-# Webex sending function
-# def send_to_webex(space_id, message):
-#     url = "https://webexapis.com/v1/messages"
-#     headers = {
-#         "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
-#         "Content-Type": "application/json",
-#     }
-#     data = {"roomId": space_id, "markdown": message}
+def format_status_with_emoji(status):
+    """
+    Maps activity status to appropriate emoji indicators
+    """
+    status_mapping = {
+        'planned': '📋 Planned',      # Clipboard for planned activities
+        'initial': '🔰 Initial',      # Japanese "beginner" symbol for initial
+        'followup': '🔄 Followup',    # Circular arrows for followup (ongoing)
+        'funnel': '⏳ Funnel',        # Hourglass for funnel (in process)
+        'completed': '✅ Completed',   # Checkmark for completed
+    }
     
-#     try:
-#         response = requests.post(url, json=data, headers=headers)
-#         if response.status_code == 200:
-#             print(f"Message successfully sent to Webex space {space_id}")
-#             return True
-#         else:
-#             print(f"Failed to send message to Webex. Status code: {response.status_code}, Error: {response.text}")
-#             return False
-#     except Exception as e:
-#         print(f"Error sending message to Webex: {e}")
-#         return False
+    # Default fallback for unknown statuses
+    if not status:
+        return "❓ Unknown"
+        
+    # Case-insensitive lookup
+    return status_mapping.get(status.lower(), status)
+
+
 
 
 # Fiscal quarter calculation
@@ -97,35 +103,57 @@ def send_to_webex(space_id, message):
             print(f"Error sending message to Webex: {e}")
             return False
 
-# Send formatted table data to Webex, chunking while keeping headers
-def send_to_webex_tables(space_id, table_lines):
-    url = "https://webexapis.com/v1/messages"
-    headers = {
-        "Authorization": f"Bearer {WEBEX_ACCESS_TOKEN}",
-        "Content-Type": "application/json",
-    }
 
-    header, separator, *rows = table_lines
-
-    for i in range(0, len(rows), WEBEX_TABLE_ROWS):
-        chunk = [header, separator] + rows[i : i + WEBEX_TABLE_ROWS]
-        message = "```\n" + "\n".join(chunk) + "\n```"
-
-        try:
-            response = requests.post(url, json={"roomId": space_id, "markdown": message}, headers=headers)
-            if response.status_code == 200:
-                print(f"Table chunk sent successfully to Webex space {space_id}")
+def send_table_to_webex(space_id, table_data, max_rows_per_chunk=30):
+    """
+    Sends a markdown table to Webex in chunks, preserving table structure.
+    
+    Args:
+        space_id: Webex space ID to send the message to
+        table_data: Complete markdown table as a string
+        max_rows_per_chunk: Maximum number of data rows per chunk
+    """
+    # Parse the table
+    lines = table_data.strip().replace("```", "").strip().split("\n")
+    if len(lines) < 3:  # Need at least header, separator, and one row
+        return send_to_webex(space_id, table_data)
+    
+    header = lines[0]
+    separator = lines[1]
+    data_rows = lines[2:]
+    
+    # Calculate chunks based on rows rather than characters
+    chunks = []
+    for i in range(0, len(data_rows), max_rows_per_chunk):
+        chunk_rows = data_rows[i:i + max_rows_per_chunk]
+        # Make sure each chunk has the header row and separator
+        chunk_table = f"```\n{header}\n{separator}\n" + "\n".join(chunk_rows) + "\n```"
+        chunks.append(chunk_table)
+    
+    # Add part numbers to each chunk
+    total_chunks = len(chunks)
+    for i, chunk in enumerate(chunks):
+        part_info = f"**Table Part {i+1}/{total_chunks}**\n"
+        chunks[i] = part_info + chunk
+    
+    # Send each chunk
+    success = True
+    for chunk in chunks:
+        if len(chunk) > WEBEX_MAX_LENGTH:
+            print(f"Warning: A single table chunk exceeds WEBEX_MAX_LENGTH ({len(chunk)} > {WEBEX_MAX_LENGTH})")
+            # If this happens, we need to reduce max_rows_per_chunk and try again
+            if max_rows_per_chunk > 1:
+                print(f"Retrying with smaller chunk size ({max_rows_per_chunk // 2} rows)")
+                return send_table_to_webex(space_id, table_data, max_rows_per_chunk // 2)
             else:
-                print(f"Failed to send table chunk. Status code: {response.status_code}, Error: {response.text}")
-                return False
-        except Exception as e:
-            print(f"Error sending table chunk to Webex: {e}")
-            return False
-
-
-
-
-
+                # If we can't reduce further, fall back to character-based chunking
+                send_result = send_to_webex(space_id, chunk)
+                success = success and send_result
+        else:
+            send_result = send_to_webex(space_id, chunk)
+            success = success and send_result
+    
+    return success
 
 def be_activity_report(be_name, status_filter=None, exclude_status=None, pending_filter=None, months=None):
     # Query the MongoDB collection for activities related to the Business Entity
@@ -165,14 +193,22 @@ def be_activity_report(be_name, status_filter=None, exclude_status=None, pending
         # Check if last_update is older than a month and highlight it
         last_update_date = datetime.strptime(last_update, "%Y-%m-%d") if last_update != "N/A" else None
         if last_update_date and (datetime.utcnow() - last_update_date > timedelta(days=45)):
-            last_update = f"{last_update}(!)"
+            last_update = f"⚠️ {last_update}"  # Warning emoji for outdated items
 
+        # Apply emoji to status
+        status_with_emoji = format_status_with_emoji(activity.get("status", "N/A"))
+
+        # Apply emoji to pending status if needed
+        pending = activity.get("pending", "N/A")
+        if pending.lower() == "yes":
+            pending = "⏱️ Yes"  # Timer for pending items
+        
         # Prepare row data
         row = [
             activity.get("activity_name", "Unknown"),
             activity.get("client_name", "N/A"),
-            activity.get("status", "N/A"),
-            activity.get("pending", "N/A"),
+            status_with_emoji,
+            pending,
             create_date,
             last_update
         ]
@@ -193,67 +229,7 @@ def be_activity_report(be_name, status_filter=None, exclude_status=None, pending
 
     # Return the formatted report within a code block
     return "```\n" + "\n".join(report_lines) + "\n```"
-
-# def be_activity_report(be_name, status_filter=None, exclude_status=None, pending_filter=None, months=None):
-#     collection = db["beactivity"]
-#     query = {"be_name": be_name}
-
-#     if status_filter:
-#         query["status"] = {"$in": status_filter}
-#     if exclude_status:
-#         query["status"] = {"$nin": exclude_status}
-#     if pending_filter:
-#         query["pending"] = {"$in": pending_filter}
-#     if months:
-#         query["desc_update.timestamp"] = {"$gte": datetime.utcnow() - timedelta(days=30 * months)}
-
-#     activities = list(collection.find(query))
-
-#     if not activities:
-#         return "No data available."
-
-#     headers = ["Activity", "Client", "Status", "Pending", "Created On", "Last Updated"]
-#     rows = []
-
-#     for activity in activities[:20]:  # Limit to 20 rows to prevent overflow
-#         create_date = activity.get("create_date", "N/A")
-#         create_date = create_date.strftime("%Y-%m-%d") if isinstance(create_date, datetime) else create_date
-
-#         last_update = max((entry.get('timestamp', "N/A") for entry in activity.get("desc_update", [])), default="N/A")
-#         last_update = last_update.strftime("%Y-%m-%d") if isinstance(last_update, datetime) else last_update
-
-#         last_update_date = datetime.strptime(last_update, "%Y-%m-%d") if last_update != "N/A" else None
-#         if last_update_date and (datetime.utcnow() - last_update_date > timedelta(days=45)):
-#             last_update = f"{last_update}(!)"
-
-#         row = [
-#             activity.get("activity_name", "Unknown"),
-#             activity.get("client_name", "N/A"),
-#             activity.get("status", "N/A"),
-#             activity.get("pending", "N/A"),
-#             create_date,
-#             last_update
-#         ]
-#         rows.append(row)
-
-#     col_widths = [max(len(str(row[i])) for row in [headers] + rows) for i in range(len(headers))]
-
-#     def format_row(row):
-#         return "| " + " | ".join(str(row[i]).ljust(col_widths[i]) for i in range(len(headers))) + " |"
-
-#     report_lines = []
-#     report_lines.append(format_row(headers))
-#     report_lines.append("|" + "|".join("-" * (col_widths[i] + 2) for i in range(len(headers))) + "|")
-#     report_lines.extend(format_row(row) for row in rows)
-
-#     markdown_report = "```\n" + "\n".join(report_lines) + "\n```"
-
-#     return markdown_report
-
-
-
-
-
+   
 
 
 # BE Activity Report (Detailed & Styled)
@@ -404,5 +380,218 @@ def be_metrics_report(be_name, months=None):
     total = sum(status_counts.values())
     for status, count in status_counts.items():
         report_lines.append(f"• {status}: {count} ({(count/total) * 100:.1f}%)")
+
+    return "\n".join(report_lines)
+
+def format_status_with_emoji(status):
+    """Assigns emojis based on status for better readability."""
+    status_mapping = {
+        "Planned": "📅",
+        "Initial": "🚀",
+        "Followup": "🔄",
+        "Funnel": "📈",
+        "Completed": "✅",
+        "Cancelled": "❌",
+        "Pending": "⏳",
+        "Stalled": "⚠️",
+        "Active": "🟢"
+    }
+    return f"{status_mapping.get(status, '🔹')} {status}"
+
+
+
+def combined_be_report(be_name, months=None):
+    collection = db["beactivity"]
+    query = {"be_name": be_name}
+    
+    if months:
+        query["desc_update.timestamp"] = {"$gte": datetime.utcnow() - timedelta(days=30 * months)}
+
+    activities = list(collection.find(query))
+    if not activities:
+        return "No data available."
+
+    valid_statuses = ['Planned', 'Initial', 'Followup', 'Funnel']  # Valid statuses excluding "Completed"
+
+    # Activity Categorization
+    active = sum(1 for a in activities if a.get('status') in valid_statuses and a.get('status') != 'Completed')
+    
+    # Completed: Count only completed activities, exclude them from active, stalled, and pending
+    completed = sum(1 for a in activities if a.get('status') == 'Completed')
+    
+    # Stalled: Activities that are not 'Completed' or 'Cancelled' and not updated in the last 14 days
+    stalled = sum(1 for a in activities if a.get('status') not in ['Completed', 'Cancelled'] and 
+                  a.get('desc_update') and 
+                  (datetime.utcnow() - max(
+                      (entry.get('timestamp', datetime.utcnow()) for entry in a['desc_update']), 
+                      default=datetime.utcnow()
+                  )).days > 28)
+
+    # Pending: Exclude Completed Activities
+    pending = sum(1 for a in activities if a.get('status') != 'Completed' and a.get('pending'))
+    
+    # Pending Breakdown (by who it is pending with)
+    pending_groups = Counter(a.get('pending', 'Unknown') for a in activities if a.get('status') != 'Completed' and a.get('pending'))
+    total_pending = sum(pending_groups.values())
+    pending_percentage = (total_pending / len(activities)) * 100 if activities else 0
+    
+    # Average Completion Time: Check the last entry in desc_update array for the completion time
+    completion_times = [
+        (max((entry.get('timestamp') for entry in a.get('desc_update', [])), default=None) - a.get('create_date')).days
+        for a in activities if a.get('status') == 'Completed' and isinstance(a.get('create_date'), datetime)
+    ]
+    avg_completion = sum(completion_times) / len(completion_times) if completion_times else 0
+
+    # Status Breakdown
+    status_counts = Counter(a.get('status', 'Unknown') for a in activities)
+
+    # Outdated Activities: Exclude Completed Activities
+    now = datetime.utcnow()
+    outdated_1m = sum(1 for a in activities if a.get('status') != 'Completed' and any(
+        update.get('timestamp') <= now - timedelta(days=30) for update in a.get('desc_update', [])
+    ))
+    outdated_2m = sum(1 for a in activities if a.get('status') != 'Completed' and any(
+        update.get('timestamp') <= now - timedelta(days=60) for update in a.get('desc_update', [])
+    ))
+    outdated_3m_plus = sum(1 for a in activities if a.get('status') != 'Completed' and any(
+        update.get('timestamp') <= now - timedelta(days=90) for update in a.get('desc_update', [])
+    ))
+
+    # # Top Users by Activities & Updates: Check the last entry in desc_update for user_id
+    user_activity_counts = Counter(a.get('user_id') for a in activities if a.get('user_id'))
+    user_update_counts = Counter(update.get('user_id') for a in activities for update in a.get('desc_update', []) if update.get('user_id'))
+
+    top_activity_user = user_activity_counts.most_common(1)
+    top_update_user = user_update_counts.most_common(1)
+
+    top_activity_user_name = User.objects.get(id=top_activity_user[0][0]).username if top_activity_user else 'N/A'
+    top_update_user_name = User.objects.get(id=top_update_user[0][0]).username if top_update_user else 'N/A'
+
+    # Report Formatting
+    report_lines = [f"📢 **BE Engagement Activity  Metrics Report for {be_name}**"]
+    report_lines.append(f"📌 **Total Activities:** {len(activities)}")
+    report_lines.append(f"🟢 **Active (Not Completed):** {active}")
+    report_lines.append(f"⚠️ **Stalled (Not Updated in 28 Days):** {stalled}")
+    report_lines.append(f"✅ **Completed:** {completed}")
+    report_lines.append(f"⏳ **Avg Completion Time:** {avg_completion:.1f} days\n")
+
+    # Pending Breakdown Display
+    report_lines.append(f"⏳ **Pending Activities:** {total_pending} ({pending_percentage:.1f}%)")
+    if pending_groups:  # Display pending activities by assignee/group
+        for person, count in pending_groups.items():
+            report_lines.append(f"   - Pending with {person}: {count}")
+    else:
+        report_lines.append("   - No pending activities found.")
+    report_lines.append("")
+
+    # Outdated Activities Display
+    report_lines.append("📅 **Outdated Activities:**")
+    report_lines.append(f"   - 🟡 Not updated for 1+ month: {outdated_1m}")
+    report_lines.append(f"   - 🟠 Not updated for 2+ months: {outdated_2m}")
+    report_lines.append(f"   - 🔴 Not updated for 3+ months: {outdated_3m_plus}\n")
+
+    # # Top Users Display
+    # report_lines.append(f"👥 **Top User by Activities:** {top_activity_user_name} ({top_activity_user[0][1]} activities)" if top_activity_user else "👥 No activity users found")
+    # report_lines.append(f"✍️ **Top User by Updates:** {top_update_user_name} ({top_update_user[0][1]} updates)" if top_update_user else "✍️ No update users found")
+    # report_lines.append("")
+
+    # Status Breakdown Display
+    report_lines.append("📊 **Status Breakdown**")
+    total = sum(status_counts.values())
+    for status, count in status_counts.items():
+        report_lines.append(f"• {format_status_with_emoji(status)}: {count} ({(count/total) * 100:.1f}%)")
+
+    return "\n".join(report_lines)
+
+
+
+
+def combined_be_initiative_report(be_name, months=None):
+    collection = db["beinitiative"]
+    query = {"be_name": be_name}
+
+    if months:
+        query["create_date"] = {"$gte": datetime.utcnow() - timedelta(days=30 * months)}
+
+    initiatives = list(collection.find(query))
+    if not initiatives:
+        return "No data available."
+
+    valid_statuses = ['Planned', 'Finished', 'Active', 'Delayed']
+
+    # Initiative Categorization
+    active = sum(1 for i in initiatives if i.get('status') in ['Planned', 'Active'])
+    delayed = sum(1 for i in initiatives if i.get('status') == 'Delayed')
+    completed = sum(1 for i in initiatives if i.get('status') == 'Finished')
+
+    # Average Completion Time
+    completion_times = [
+        (i.get('expected_execution_date') - i.get('create_date')).days
+        for i in initiatives if i.get('status') == 'Finished' and isinstance(i.get('expected_execution_date'), datetime)
+    ]
+    avg_completion = sum(completion_times) / len(completion_times) if completion_times else 0
+
+    # Status Breakdown
+    status_counts = Counter(i.get('status', 'Unknown') for i in initiatives)
+
+    # Outdated Initiatives (Not Updated for Periods of Time)
+    now = datetime.utcnow()
+
+    outdated_1m = sum(1 for i in initiatives if any(
+        isinstance(update, dict) and update.get('timestamp') <= now - timedelta(days=30)
+        for update in i.get('desc_update', [])
+    ))
+
+    outdated_2m = sum(1 for i in initiatives if any(
+        isinstance(update, dict) and update.get('timestamp') <= now - timedelta(days=60)
+        for update in i.get('desc_update', [])
+    ))
+
+    outdated_3m_plus = sum(1 for i in initiatives if any(
+        isinstance(update, dict) and update.get('timestamp') <= now - timedelta(days=90)
+        for update in i.get('desc_update', [])
+    ))
+
+    # Overdue Initiatives (Based on Expected Execution Date)
+    overdue_1m = sum(1 for i in initiatives if i.get('expected_execution_date') and
+                     i.get('expected_execution_date') <= now - timedelta(days=30))
+
+    overdue_2m = sum(1 for i in initiatives if i.get('expected_execution_date') and
+                     i.get('expected_execution_date') <= now - timedelta(days=60))
+
+    overdue_3m_plus = sum(1 for i in initiatives if i.get('expected_execution_date') and
+                          i.get('expected_execution_date') <= now - timedelta(days=90))
+
+    # Top Users by Initiatives
+    user_initiative_counts = Counter(i.get('user_id') for i in initiatives if i.get('user_id'))
+
+    top_initiative_user = user_initiative_counts.most_common(1)
+    top_initiative_user_name = User.objects.get(id=top_initiative_user[0][0]).username if top_initiative_user else 'N/A'
+
+    # Report Formatting
+    report_lines = [f"📢 **BE Initiative Report for {be_name}**"]
+    report_lines.append(f"📌 **Total Initiatives:** {len(initiatives)}")
+    report_lines.append(f"🟢 **Active (Planned & Active):** {active}")
+    report_lines.append(f"⚠️ **Delayed:** {delayed}")
+    report_lines.append(f"✅ **Completed:** {completed}")
+    report_lines.append(f"⏳ **Avg Completion Time:** {avg_completion:.1f} days\n")
+
+    report_lines.append("📅 **Overdue Initiatives:**")
+    report_lines.append(f"   - 🟡 Past due by 1+ month: {overdue_1m}")
+    report_lines.append(f"   - 🟠 Past due by 2+ months: {overdue_2m}")
+    report_lines.append(f"   - 🔴 Past due by 3+ months: {overdue_3m_plus}\n")
+
+    report_lines.append(f"⏳ **Outdated Initiatives (Not Updated for Periods of Time):**")
+    report_lines.append(f"   - 🟡 Past due by 1+ month: {outdated_1m}")
+    report_lines.append(f"   - 🟠 Past due by 2+ months: {outdated_2m}")
+    report_lines.append(f"   - 🔴 Past due by 3+ months: {outdated_3m_plus}\n")
+
+    report_lines.append(f"👥 **Top User by Initiatives:** {top_initiative_user_name} ({top_initiative_user[0][1]} initiatives)" if top_initiative_user else "👥 No initiative users found")
+    report_lines.append("")
+
+    report_lines.append("📊 **Status Breakdown**")
+    total = sum(status_counts.values())
+    for status, count in status_counts.items():
+        report_lines.append(f"• {format_status_with_emoji(status)}: {count} ({(count/total) * 100:.1f}%)")
 
     return "\n".join(report_lines)
