@@ -136,56 +136,56 @@ def send_to_webex(space_id, message):
 
 
 
-# BE Activity Report Generation
-# def generate_beactivity_report(be_name, status_filter, exclude_status, pending_filter, months):
-#     collection = db["beactivity"]
-#     query = {"be_name": be_name}
+BE Activity Report Generation
+def generate_beactivity_report(be_name, status_filter, exclude_status, pending_filter, months):
+    collection = db["beactivity"]
+    query = {"be_name": be_name}
 
-#     if status_filter:
-#         query["status"] = {"$in": status_filter}
+    if status_filter:
+        query["status"] = {"$in": status_filter}
 
-#     if exclude_status:
-#         query["status"] = {"$nin": exclude_status}
+    if exclude_status:
+        query["status"] = {"$nin": exclude_status}
 
-#     if pending_filter:
-#         query["pending"] = {"$in": pending_filter}
+    if pending_filter:
+        query["pending"] = {"$in": pending_filter}
 
-#     if months:
-#         start_date = datetime.utcnow() - timedelta(days=30 * months)
-#         query["desc_update.timestamp"] = {"$gte": start_date}
+    if months:
+        start_date = datetime.utcnow() - timedelta(days=30 * months)
+        query["desc_update.timestamp"] = {"$gte": start_date}
 
-#     activities = list(collection.find(query))  # Convert the cursor to a list
-#     print("Activities found:", activities)  # Print fetched activities
+    activities = list(collection.find(query))  # Convert the cursor to a list
+    print("Activities found:", activities)  # Print fetched activities
 
-#     if not activities:  # Check if the list is empty or None
-#         return None
+    if not activities:  # Check if the list is empty or None
+        return None
 
-#     # Build the formatted report
-#     report_lines = [f"**BE Activity Report for {be_name}**\n"]
-#     for activity in activities:
-#         # Get the create_date from the activity, assuming it's in the 'create_date' field
-#         create_date = activity.get("create_date", "N/A")
-#         if create_date != "N/A":
-#             create_date = create_date.strftime("%Y-%m-%d")  # Format the date as YYYY-MM-DD
+    # Build the formatted report
+    report_lines = [f"**BE Activity Report for {be_name}**\n"]
+    for activity in activities:
+        # Get the create_date from the activity, assuming it's in the 'create_date' field
+        create_date = activity.get("create_date", "N/A")
+        if create_date != "N/A":
+            create_date = create_date.strftime("%Y-%m-%d")  # Format the date as YYYY-MM-DD
 
-#         # Get the most recent 'desc_update.timestamp' for last_update
-#         last_update = "N/A"
-#         if activity.get("desc_update"):
-#             timestamps = [entry['timestamp'] for entry in activity['desc_update']]
-#             if timestamps:
-#                 last_update = max(timestamps).strftime("%Y-%m-%d")  # Format the date as YYYY-MM-DD
+        # Get the most recent 'desc_update.timestamp' for last_update
+        last_update = "N/A"
+        if activity.get("desc_update"):
+            timestamps = [entry['timestamp'] for entry in activity['desc_update']]
+            if timestamps:
+                last_update = max(timestamps).strftime("%Y-%m-%d")  # Format the date as YYYY-MM-DD
 
-#         report_lines.append(
-#             f"- **{activity['activity_name']}** (Client: {activity['client_name']}, Status: {activity['status']}, Pending: {activity['pending']}, Created: {create_date}, Last Updated: {last_update})"
-#         )
+        report_lines.append(
+            f"- **{activity['activity_name']}** (Client: {activity['client_name']}, Status: {activity['status']}, Pending: {activity['pending']}, Created: {create_date}, Last Updated: {last_update})"
+        )
 
-#     return "\n".join(report_lines)
+    return "\n".join(report_lines)
 
 
 
 
 # # BE Activity Report Generation
-def generate_beactivity_report(be_name, status_filter, exclude_status, pending_filter, months):
+def generate_beactivity_reportd(be_name, status_filter, exclude_status, pending_filter, months):
     collection = db["beactivity"]
     query = {"be_name": be_name}
 

@@ -205,7 +205,7 @@ def be_activity_report_view(request):
             else:
                 messages.warning(request, "No data found for the selected filters.")
 
-            return redirect("be_activity_report")
+            return redirect("messaging:be_activity_report")
 
     else:
         form = BEActivityReportForm()

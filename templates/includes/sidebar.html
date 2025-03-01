@@ -54,6 +54,22 @@
         </li>
         {% endif %}
 
+        {% if  request.user.is_superuser %}
+        <li
+          data-username="messaging spaces "
+          class="nav-item pcoded-hasmenu">
+          <a href="javascript:" class="nav-link "><span class="pcoded-micon"><i
+                class="feather icon-lock"></i></span><span class="pcoded-mtext">Messaging</span></a>
+          <ul class="pcoded-submenu">
+            <li class=""><a href="{% url 'messaging:be_activity_report' %}" class="">BE Report</a></li>
+            <li class=""><a href="{% url 'messaging:add_webex_space' %}" class="">Add Space</a></li>
+            <li class=""><a href="{% url 'messaging:send_message' %}" class="">Send Message</a></li>
+            <li class=""><a href="{% url 'messaging:send_mmessage' %}" class="">Send Mmessage</a></li>
+            
+          </ul>
+        </li>
+        {% endif %}
+
         {% if  request.user.is_authenticated %}
           
         <li
