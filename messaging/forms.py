@@ -97,7 +97,9 @@ class BEActivityReportForm(forms.Form):
         label="Business Entity",
         required=True,
     )
-    space_id = forms.CharField(label="Webex Space ID", max_length=255)
+    #space_id = forms.CharField(label="Webex Space ID", max_length=255)
+    
+
     status_filter = forms.MultipleChoiceField(
         choices=STATUS_CHOICES,
         required=False,
@@ -122,3 +124,9 @@ class BEActivityReportForm(forms.Form):
         min_value=1,
         help_text="Leave blank for all-time report",
     )
+    space_id = forms.ChoiceField(label="Webex Space", choices=[])  # No static choices
+    # Checkboxes for optional reports
+    send_activity_report = forms.BooleanField(required=False, label="Send Activity Report")
+    send_detailed_report = forms.BooleanField(required=False, label="Send Detailed Report")
+    send_initiative_report = forms.BooleanField(required=False, label="Send Initiative Report")
+    send_combined_report = forms.BooleanField(required=False, label="Send Combined Report")

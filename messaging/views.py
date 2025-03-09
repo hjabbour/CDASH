@@ -132,9 +132,19 @@ def send_mwebex_message(request):
 
 
 
+
+## woking with select and options
+
 # def be_activity_report_view(request):
+#     # Retrieve Webex spaces from MongoDB
+#     collection = db["webex_spaces"]
+#     existing_spaces = list(collection.find({}, {"_id": 0, "space_name": 1, "space_id": 1}))
+#     space_choices = [(space["space_id"], space["space_name"]) for space in existing_spaces]
+
 #     if request.method == "POST":
 #         form = BEActivityReportForm(request.POST)
+#         form.fields["space_id"].choices = space_choices  # Set choices dynamically
+
 #         if form.is_valid():
 #             be_name = form.cleaned_data["be_name"]
 #             space_id = form.cleaned_data["space_id"]
@@ -143,34 +153,48 @@ def send_mwebex_message(request):
 #             pending_filter = form.cleaned_data["pending_filter"]
 #             months = form.cleaned_data["months"]
 
-#             # Generate the report
-#             # report_text = be_metrics_report(
-#             # #report_text = generate_beactivity_report_dct(
+#             # Generate all 4 reports
+#             activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
+#             detailed_report = be_activity_report_detailed(be_name, status_filter, exclude_status, pending_filter, months)
+#             initiative_report = combined_be_initiative_report(be_name, months)
+#             combined_report = combined_be_report(be_name, months)
 
-#             #     be_name, status_filter, exclude_status, pending_filter, months
-#             # )
-#             report_text=be_metrics_report(be_name,months)
+#             # Collect all non-empty reports
+#             reports_to_send = {
+#                 "Activity Report": activity_report,
+#                 "Detailed Activity Report": detailed_report,
+#                 "Initiative Report": initiative_report,
+#                 "Metric Detail Report": combined_report,
+#             }
+#             reports_to_send = {name: report for name, report in reports_to_send.items() if report}
 
-#             if report_text:
-#                 send_to_webex(space_id, report_text)
-#                 #send_adaptive_card(report_text,recipient_email=None,space_id=space_id)
-#                 #send_table_message(report_text,recipient_email=None,space_id=space_id)
-                
-#                 messages.success(request, "Report sent successfully to Webex!")
+#             if reports_to_send:
+#                 for report_name, report_text in reports_to_send.items():
+#                     send_to_webex(space_id, f"**{report_name} for {be_name}**\n{report_text}")
+
+#                 messages.success(request, "All reports sent successfully to Webex!")
 #             else:
 #                 messages.warning(request, "No data found for the selected filters.")
 
-#             return redirect("be_activity_report")
+#             return redirect("messaging:be_activity_report")
 
 #     else:
 #         form = BEActivityReportForm()
+#         form.fields["space_id"].choices = space_choices  # Set choices dynamically
 
-#     return render(request, "messaging/be_activity_report.html", {"form": form})
+#     return render(request, "messaging/be_activity_report.html", {"form": form, "existing_spaces": existing_spaces})
 
-
+@user_passes_test(superuser_required)
 def be_activity_report_view(request):
+    # Retrieve Webex spaces from MongoDB
+    collection = db["webex_spaces"]
+    existing_spaces = list(collection.find({}, {"_id": 0, "space_name": 1, "space_id": 1}))
+    space_choices = [(space["space_id"], space["space_name"]) for space in existing_spaces]
+
     if request.method == "POST":
         form = BEActivityReportForm(request.POST)
+        form.fields["space_id"].choices = space_choices  # Set choices dynamically
+
         if form.is_valid():
             be_name = form.cleaned_data["be_name"]
             space_id = form.cleaned_data["space_id"]
@@ -179,35 +203,43 @@ def be_activity_report_view(request):
             pending_filter = form.cleaned_data["pending_filter"]
             months = form.cleaned_data["months"]
 
-            # Generate all reports
-            #activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
-            detailed_report = be_activity_report_detailed(be_name, status_filter, exclude_status, pending_filter, months)
-            initiative_report = combined_be_initiative_report(be_name, months)
-            combined_report = combined_be_report(be_name,months)
+            # Check which reports to generate based on user selection
+            reports_to_send = {}
 
-            # Collect all non-empty reports
-            reports = {
-                #"Activity Report": activity_report,
-                #"Detailed Activity Report": detailed_report,
-                "Initiative Report": initiative_report,
-                "Metric detail Report": combined_report,
-                
-            }
-            reports_to_send = {name: report for name, report in reports.items() if report}
+            if form.cleaned_data["send_activity_report"]:
+                activity_report = be_activity_report(be_name, status_filter, exclude_status, pending_filter, months)
+                if activity_report:
+                    reports_to_send["Activity Report"] = activity_report
 
+            if form.cleaned_data["send_detailed_report"]:
+                detailed_report = be_activity_report_detailed(be_name, status_filter, exclude_status, pending_filter, months)
+                if detailed_report:
+                    reports_to_send["Detailed Activity Report"] = detailed_report
+
+            if form.cleaned_data["send_initiative_report"]:
+                initiative_report = combined_be_initiative_report(be_name, months)
+                if initiative_report:
+                    reports_to_send["Initiative Report"] = initiative_report
+
+            if form.cleaned_data["send_combined_report"]:
+                combined_report = combined_be_report(be_name, months)
+                if combined_report:
+                    reports_to_send["Combined Report"] = combined_report
+
+            # Send only the selected and non-empty reports
             if reports_to_send:
                 for report_name, report_text in reports_to_send.items():
-                    #send_table_to_webex(space_id, f"**{report_name} {be_name}**\n{report_text}")
-                    send_to_webex(space_id, f"**{report_name} {be_name}**\n{report_text}")
+                    #send_to_webex(space_id, f"**{report_name} for {be_name}**\n{report_text}")
+                    send_to_webex(space_id, f"{report_text}")
 
-                
-                messages.success(request, "All reports sent successfully to Webex!")
+                messages.success(request, "Selected reports sent successfully to Webex!")
             else:
-                messages.warning(request, "No data found for the selected filters.")
+                messages.warning(request, "No data found for the selected reports.")
 
             return redirect("messaging:be_activity_report")
 
     else:
         form = BEActivityReportForm()
+        form.fields["space_id"].choices = space_choices  # Set choices dynamically
 
-    return render(request, "messaging/be_activity_report.html", {"form": form})
+    return render(request, "messaging/be_activity_report.html", {"form": form, "existing_spaces": existing_spaces})
