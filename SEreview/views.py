@@ -1839,6 +1839,15 @@ def process_dash_be(request, form_name):
 @login_required
 def be_dashboard_be(request, form_name=None, be_name=None, source=None):
     user_id = request.user.id
+    user = request.user 
+    
+    if user.groups.filter(name='SE').exists():
+        source = 'SE'
+    elif user.groups.filter(name='BE').exists():
+        source = 'BE'
+    else:
+        source = 'BE'  # Handle unknown group cases
+
     # Set default values if parameters are not provided
     if form_name is None:
         form_name = 'bestatus'
@@ -1870,7 +1879,12 @@ def be_dashboard_be(request, form_name=None, be_name=None, source=None):
         #print('existing clients' f"{existing_clients}")
         
         # Fetch data for the specified form and BE
-        data = collection_client_be(form_name, None, be_name)  # Fetch data using be_name directly
+        #data = collection_client_be(form_name, None, be_name)  # Fetch data using be_name directly
+        # Fetch data conditionally based on `source`
+        if source == 'SE':
+            data = collection_client_be(form_name, user_id, be_name)  # Filter for SE users
+        else:
+            data = collection_client_be(form_name, None, be_name)  # Default behavior
         fields = fields_to_display.get(form_name, [])  # Define this based on your logic
         data = list(data)
         
